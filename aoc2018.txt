@@ -6,29 +6,63 @@
 @package aoc2018
 @version 0.1.0.0
 
+
+-- | Types to drive the challenge runner and help speed up/clean up
+--   solutions.
 module AOC2018.Types
+
+-- | Abstracting over the type of a challenge solver to help with cleaner
+--   solutions.
+--   
+--   Consists of a parser, a shower, and a solver. The solver solves a
+--   general <tt>a -&gt; <a>Maybe</a> b</tt> function, and the parser and
+--   shower are used to handle the boilerplate of parsing and printing the
+--   solution.
 data Challenge
-[MkC] :: {cParse :: String -> Maybe a, cShow :: b -> String, cSolve :: a -> Maybe b} -> Challenge
+[MkC] :: {cParse :: String -> Maybe a, cSolve :: a -> Maybe b, cShow :: b -> String} -> Challenge
+
+-- | Construct a <a>Challenge</a> from a <tt>String -&gt; <a>Maybe</a>
+--   String</tt> solver, which might fail. Does no parsing or special
+--   printing treatment.
 withSolver :: (String -> Maybe String) -> Challenge
+
+-- | Construct a <a>Challenge</a> from just a normal <tt>String -&gt;
+--   String</tt> solver. Does no parsing or special printing treatment.
 withSolver' :: (String -> String) -> Challenge
+
+-- | Errors that might happen when running a <a>Challenge</a> on some
+--   input.
 data ChallengeError
 CEParse :: ChallengeError
 CESolve :: ChallengeError
+
+-- | Run a <a>Challenge</a> on some input.
 runChallenge :: Challenge -> String -> Either ChallengeError String
+
+-- | A map of days to parts to challenges.
 type ChallengeMap = Map (Finite 25) (Map Char Challenge)
+
+-- | A specification for a specific challenge. Should consist of a day and
+--   a lowercase character.
 data ChallengeSpec
 CS :: Finite 25 -> Char -> ChallengeSpec
 [_csDay] :: ChallengeSpec -> Finite 25
 [_csPart] :: ChallengeSpec -> Char
 instance GHC.Generics.Generic AOC2018.Types.ChallengeError
+instance GHC.Classes.Ord AOC2018.Types.ChallengeError
+instance GHC.Classes.Eq AOC2018.Types.ChallengeError
+instance GHC.Show.Show AOC2018.Types.ChallengeError
 instance Control.DeepSeq.NFData AOC2018.Types.ChallengeError
 
+
+-- | Template Haskell for discovering all named challenges in a given
+--   directory.
 module AOC2018.Discover
 
 -- | Meant to be called like:
 --   
 --   <pre>
---   mkChallengeMap $$(challengeList "src<i>AOC2018</i>Challenge")
+--   mkChallengeMap $$(challengeList "src/AOC2018/Challenge")
 --   </pre>
 mkChallengeMap :: [(Finite 25, (Char, Challenge))] -> ChallengeMap
 challengeList :: FilePath -> Q (TExp [(Finite 25, (Char, Challenge))])
@@ -4024,21 +4058,104 @@ class NFData2 (p :: Type -> Type -> Type)
 --   no support for generically deriving <a>liftRnf2</a>.
 liftRnf2 :: NFData2 p => (a -> ()) -> (b -> ()) -> p a b -> ()
 
+-- | Formally, the class <a>Profunctor</a> represents a profunctor from
+--   <tt>Hask</tt> -&gt; <tt>Hask</tt>.
+--   
+--   Intuitively it is a bifunctor where the first argument is
+--   contravariant and the second argument is covariant.
+--   
+--   You can define a <a>Profunctor</a> by either defining <a>dimap</a> or
+--   by defining both <a>lmap</a> and <a>rmap</a>.
+--   
+--   If you supply <a>dimap</a>, you should ensure that:
+--   
+--   <pre>
+--   <a>dimap</a> <a>id</a> <a>id</a> ≡ <a>id</a>
+--   </pre>
+--   
+--   If you supply <a>lmap</a> and <a>rmap</a>, ensure:
+--   
+--   <pre>
+--   <a>lmap</a> <a>id</a> ≡ <a>id</a>
+--   <a>rmap</a> <a>id</a> ≡ <a>id</a>
+--   </pre>
+--   
+--   If you supply both, you should also ensure:
+--   
+--   <pre>
+--   <a>dimap</a> f g ≡ <a>lmap</a> f <a>.</a> <a>rmap</a> g
+--   </pre>
+--   
+--   These ensure by parametricity:
+--   
+--   <pre>
+--   <a>dimap</a> (f <a>.</a> g) (h <a>.</a> i) ≡ <a>dimap</a> g h <a>.</a> <a>dimap</a> f i
+--   <a>lmap</a> (f <a>.</a> g) ≡ <a>lmap</a> g <a>.</a> <a>lmap</a> f
+--   <a>rmap</a> (f <a>.</a> g) ≡ <a>rmap</a> f <a>.</a> <a>rmap</a> g
+--   </pre>
+class Profunctor (p :: Type -> Type -> Type)
+
+-- | Map over both arguments at the same time.
+--   
+--   <pre>
+--   <a>dimap</a> f g ≡ <a>lmap</a> f <a>.</a> <a>rmap</a> g
+--   </pre>
+dimap :: Profunctor p => (a -> b) -> (c -> d) -> p b c -> p a d
+
+-- | Map the first argument contravariantly.
+--   
+--   <pre>
+--   <a>lmap</a> f ≡ <a>dimap</a> f <a>id</a>
+--   </pre>
+lmap :: Profunctor p => (a -> b) -> p b c -> p a c
+
+-- | Map the second argument covariantly.
+--   
+--   <pre>
+--   <a>rmap</a> ≡ <a>dimap</a> <a>id</a>
+--   </pre>
+rmap :: Profunctor p => (b -> c) -> p a b -> p a c
+
 -- | The implementation of the pointed list structure which tracks the
 --   current position in the list structure.
 data PointedList a
+
+-- | A specification for a specific challenge. Should consist of a day and
+--   a lowercase character.
 data ChallengeSpec
 CS :: Finite 25 -> Char -> ChallengeSpec
 [_csDay] :: ChallengeSpec -> Finite 25
 [_csPart] :: ChallengeSpec -> Char
+
+-- | A map of days to parts to challenges.
 type ChallengeMap = Map (Finite 25) (Map Char Challenge)
+
+-- | Errors that might happen when running a <a>Challenge</a> on some
+--   input.
 data ChallengeError
 CEParse :: ChallengeError
 CESolve :: ChallengeError
+
+-- | Abstracting over the type of a challenge solver to help with cleaner
+--   solutions.
+--   
+--   Consists of a parser, a shower, and a solver. The solver solves a
+--   general <tt>a -&gt; <a>Maybe</a> b</tt> function, and the parser and
+--   shower are used to handle the boilerplate of parsing and printing the
+--   solution.
 data Challenge
-[MkC] :: {cParse :: String -> Maybe a, cShow :: b -> String, cSolve :: a -> Maybe b} -> Challenge
+[MkC] :: {cParse :: String -> Maybe a, cSolve :: a -> Maybe b, cShow :: b -> String} -> Challenge
+
+-- | Construct a <a>Challenge</a> from just a normal <tt>String -&gt;
+--   String</tt> solver. Does no parsing or special printing treatment.
 withSolver' :: (String -> String) -> Challenge
+
+-- | Construct a <a>Challenge</a> from a <tt>String -&gt; <a>Maybe</a>
+--   String</tt> solver, which might fail. Does no parsing or special
+--   printing treatment.
 withSolver :: (String -> Maybe String) -> Challenge
+
+-- | Run a <a>Challenge</a> on some input.
 runChallenge :: Challenge -> String -> Either ChallengeError String
 
 -- | Strict (!!)
