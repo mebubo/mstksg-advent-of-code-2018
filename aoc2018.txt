@@ -71,6 +71,14 @@ module AOC2018.Discover
 --   mkChallengeMap $$(challengeList "src/AOC2018/Challenge")
 --   </pre>
 mkChallengeMap :: [(Finite 25, (Char, Challenge))] -> ChallengeMap
+
+-- | Template Haskell splice to produce a list of all named challenges in a
+--   directory. Expects challenges as function names following the format
+--   <tt>dayDDp</tt>, where <tt>DD</tt> is a two-digit zero-added day, and
+--   <tt>p</tt> is a lower-case letter corresponding to the part of the
+--   challenge.
+--   
+--   See <a>mkChallengeMap</a> for a description of usage.
 challengeList :: FilePath -> Q (TExp [(Finite 25, (Char, Challenge))])
 
 
@@ -4199,25 +4207,46 @@ day01a :: Challenge
 -- | Gather together all challenges and collect them into a single map.
 --   Also contains general utilities used by the auto-runner executable.
 module AOC2018
+
+-- | A map of all challenges.
 challengeMap :: Map (Finite 25) (Map Char Challenge)
+
+-- | A record of paths corresponding to a specific challenge.
 data ChallengePaths
 CP :: !FilePath -> !FilePath -> !FilePath -> !FilePath -> ChallengePaths
 [_cpDataUrl] :: ChallengePaths -> !FilePath
 [_cpInput] :: ChallengePaths -> !FilePath
 [_cpAnswer] :: ChallengePaths -> !FilePath
 [_cpTests] :: ChallengePaths -> !FilePath
+
+-- | Generate a <a>ChallengePaths</a> from a specification of a challenge.
 challengePaths :: ChallengeSpec -> ChallengePaths
+
+-- | A record of data (test inputs, answers) corresponding to a specific
+--   challenge.
 data ChallengeData
 CD :: !Either [String] String -> !Maybe String -> ![(String, Maybe String)] -> ChallengeData
 [_cdInp] :: ChallengeData -> !Either [String] String
 [_cdAns] :: ChallengeData -> !Maybe String
 [_cdTests] :: ChallengeData -> ![(String, Maybe String)]
+
+-- | Load data associated with a challenge from a given specification. Will
+--   fetch answers online and cache if required (and if giten a session
+--   token).
 challengeData :: Maybe String -> ChallengeSpec -> IO ChallengeData
+
+-- | Configuration for auto-runner.
 newtype Config
 Cfg :: Maybe String -> Config
 [_cfgSession] :: Config -> Maybe String
+
+-- | Load a <a>Config</a> from a given filepath.
 configFile :: FilePath -> IO Config
+
+-- | Default math to find a configuration file.
 defConfPath :: FilePath
+
+-- | Load a session token from the configuration file at a given filepath.
 session :: FilePath -> IO (Maybe String)
 instance GHC.Generics.Generic AOC2018.Config
 instance GHC.Show.Show AOC2018.ChallengePaths
