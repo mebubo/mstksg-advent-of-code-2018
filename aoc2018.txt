@@ -2,7 +2,13 @@
 -- See Hoogle, http://www.haskell.org/hoogle/
 
 
--- | It's the Advent of Code 2018!
+-- | Advent of Code 2018 solutions and auto-runner
+--   
+--   It's the Advent of Code 2018!
+--   
+--   This package contains Advent of 2018 solutions (spoilers!) and
+--   auto-runner. Each challenge exists in its own module, and module
+--   headers will also include a brief synopsis and reflection.
 @package aoc2018
 @version 0.1.0.0
 
@@ -67,14 +73,24 @@ module AOC2018.Discover
 mkChallengeMap :: [(Finite 25, (Char, Challenge))] -> ChallengeMap
 challengeList :: FilePath -> Q (TExp [(Finite 25, (Char, Challenge))])
 
+
+-- | Assorted utility functions and orphans used for solutions.
 module AOC2018.Util
+
+-- | Strip trailing and leading whitespace.
 strip :: String -> String
+
+-- | Iterate until a <a>Nothing</a> is produced
 iterateMaybe :: (a -> Maybe a) -> a -> [a]
 
 -- | Strict (!!)
 (!!!) :: [a] -> Int -> a
 dup :: a -> (a, a)
+
+-- | <a>scanl</a> generalized to all <a>Traversable</a>.
 scanlT :: Traversable t => (b -> a -> b) -> b -> t a -> t b
+
+-- | <a>scanr</a> generalized to all <a>Traversable</a>.
 scanrT :: Traversable t => (a -> b -> b) -> b -> t a -> t b
 
 module AOC2018.Prelude
@@ -4160,15 +4176,28 @@ runChallenge :: Challenge -> String -> Either ChallengeError String
 
 -- | Strict (!!)
 (!!!) :: [a] -> Int -> a
+
+-- | Strip trailing and leading whitespace.
 strip :: String -> String
+
+-- | Iterate until a <a>Nothing</a> is produced
 iterateMaybe :: (a -> Maybe a) -> a -> [a]
 dup :: a -> (a, a)
+
+-- | <a>scanl</a> generalized to all <a>Traversable</a>.
 scanlT :: Traversable t => (b -> a -> b) -> b -> t a -> t b
+
+-- | <a>scanr</a> generalized to all <a>Traversable</a>.
 scanrT :: Traversable t => (a -> b -> b) -> b -> t a -> t b
 
+
+-- | Day 1!
 module AOC2018.Challenge.Day01
 day01a :: Challenge
 
+
+-- | Gather together all challenges and collect them into a single map.
+--   Also contains general utilities used by the auto-runner executable.
 module AOC2018
 challengeMap :: Map (Finite 25) (Map Char Challenge)
 data ChallengePaths
