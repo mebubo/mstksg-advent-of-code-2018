@@ -13,30 +13,9 @@
 @version 0.1.0.0
 
 
--- | Utilities for loading configuration file.
-module AOC2018.Config
-
--- | Configuration for auto-runner.
-newtype Config
-Cfg :: Maybe String -> Config
-[_cfgSession] :: Config -> Maybe String
-
--- | Load a <a>Config</a> from a given filepath.
-configFile :: FilePath -> IO Config
-
--- | Default math to find a configuration file.
-defConfPath :: FilePath
-
--- | Load a session token from the configuration file at a given filepath.
-session :: FilePath -> IO (Maybe String)
-instance GHC.Generics.Generic AOC2018.Config.Config
-instance Data.Aeson.Types.ToJSON.ToJSON AOC2018.Config.Config
-instance Data.Aeson.Types.FromJSON.FromJSON AOC2018.Config.Config
-
-
 -- | Types to drive the challenge runner and help speed up/clean up
 --   solutions.
-module AOC2018.Types
+module AOC2018.Challenge
 
 -- | Abstracting over the type of a challenge solver to help with cleaner
 --   solutions.
@@ -46,7 +25,7 @@ module AOC2018.Types
 --   shower are used to handle the boilerplate of parsing and printing the
 --   solution.
 data Challenge
-[MkC] :: {cParse :: String -> Maybe a, cSolve :: a -> Maybe b, cShow :: b -> String} -> Challenge
+[MkC] :: {cParse :: String -> Maybe a " parse input into an @a@", cSolve :: a -> Maybe b " solve an @a@ input to a @b@ solution", cShow :: b -> String " print out the @b@ solution in a pretty way"} -> Challenge
 
 -- | Construct a <a>Challenge</a> from a <tt>String -&gt; <a>Maybe</a>
 --   String</tt> solver, which might fail. Does no parsing or special
@@ -75,11 +54,32 @@ data ChallengeSpec
 CS :: Finite 25 -> Char -> ChallengeSpec
 [_csDay] :: ChallengeSpec -> Finite 25
 [_csPart] :: ChallengeSpec -> Char
-instance GHC.Generics.Generic AOC2018.Types.ChallengeError
-instance GHC.Classes.Ord AOC2018.Types.ChallengeError
-instance GHC.Classes.Eq AOC2018.Types.ChallengeError
-instance GHC.Show.Show AOC2018.Types.ChallengeError
-instance Control.DeepSeq.NFData AOC2018.Types.ChallengeError
+instance GHC.Generics.Generic AOC2018.Challenge.ChallengeError
+instance GHC.Classes.Ord AOC2018.Challenge.ChallengeError
+instance GHC.Classes.Eq AOC2018.Challenge.ChallengeError
+instance GHC.Show.Show AOC2018.Challenge.ChallengeError
+instance Control.DeepSeq.NFData AOC2018.Challenge.ChallengeError
+
+
+-- | Utilities for loading configuration file.
+module AOC2018.Config
+
+-- | Configuration for auto-runner.
+newtype Config
+Cfg :: Maybe String -> Config
+[_cfgSession] :: Config -> Maybe String
+
+-- | Load a <a>Config</a> from a given filepath.
+configFile :: FilePath -> IO Config
+
+-- | Default math to find a configuration file.
+defConfPath :: FilePath
+
+-- | Load a session token from the configuration file at a given filepath.
+session :: FilePath -> IO (Maybe String)
+instance GHC.Generics.Generic AOC2018.Config.Config
+instance Data.Aeson.Types.ToJSON.ToJSON AOC2018.Config.Config
+instance Data.Aeson.Types.FromJSON.FromJSON AOC2018.Config.Config
 
 
 -- | Template Haskell for discovering all named challenges in a given
@@ -4352,7 +4352,7 @@ CESolve :: ChallengeError
 --   shower are used to handle the boilerplate of parsing and printing the
 --   solution.
 data Challenge
-[MkC] :: {cParse :: String -> Maybe a, cSolve :: a -> Maybe b, cShow :: b -> String} -> Challenge
+[MkC] :: {cParse :: String -> Maybe a " parse input into an @a@", cSolve :: a -> Maybe b " solve an @a@ input to a @b@ solution", cShow :: b -> String " print out the @b@ solution in a pretty way"} -> Challenge
 
 -- | Construct a <a>Challenge</a> from just a normal <tt>String -&gt;
 --   String</tt> solver. Does no parsing or special printing treatment.
@@ -4386,6 +4386,12 @@ maybeToEither :: e -> Maybe a -> Either e a
 
 -- | Lazily find the first repeated item.
 firstRepeated :: Ord a => [a] -> Maybe a
+
+
+-- | Day 2!
+module AOC2018.Challenge.Day02
+day02a :: Challenge
+day02b :: Challenge
 
 
 -- | Loading challenge data and prompts.
