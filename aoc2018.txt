@@ -13,6 +13,27 @@
 @version 0.1.0.0
 
 
+-- | Utilities for loading configuration file.
+module AOC2018.Config
+
+-- | Configuration for auto-runner.
+newtype Config
+Cfg :: Maybe String -> Config
+[_cfgSession] :: Config -> Maybe String
+
+-- | Load a <a>Config</a> from a given filepath.
+configFile :: FilePath -> IO Config
+
+-- | Default math to find a configuration file.
+defConfPath :: FilePath
+
+-- | Load a session token from the configuration file at a given filepath.
+session :: FilePath -> IO (Maybe String)
+instance GHC.Generics.Generic AOC2018.Config.Config
+instance Data.Aeson.Types.ToJSON.ToJSON AOC2018.Config.Config
+instance Data.Aeson.Types.FromJSON.FromJSON AOC2018.Config.Config
+
+
 -- | Types to drive the challenge runner and help speed up/clean up
 --   solutions.
 module AOC2018.Types
@@ -106,6 +127,10 @@ maybeToEither :: e -> Maybe a -> Either e a
 -- | Lazily find the first repeated item.
 firstRepeated :: Ord a => [a] -> Maybe a
 
+
+-- | Custom Prelude while developing challenges. Ideally, once challenges
+--   are completed, an import to this module would be replaced with
+--   explicit ones for future readers.
 module AOC2018.Prelude
 
 -- | Append two lists, i.e.,
@@ -4363,23 +4388,15 @@ maybeToEither :: e -> Maybe a -> Either e a
 firstRepeated :: Ord a => [a] -> Maybe a
 
 
--- | Day 1!
-module AOC2018.Challenge.Day01
-day01a :: Challenge
-day01b :: Challenge
-
-
--- | Gather together all challenges and collect them into a single map.
---   Also contains general utilities used by the auto-runner executable.
-module AOC2018
-
--- | A map of all challenges.
-challengeMap :: Map (Finite 25) (Map Char Challenge)
+-- | Loading challenge data and prompts.
+module AOC2018.Load
 
 -- | A record of paths corresponding to a specific challenge.
 data ChallengePaths
-CP :: !FilePath -> !FilePath -> !FilePath -> !FilePath -> ChallengePaths
+CP :: !FilePath -> !FilePath -> !FilePath -> !FilePath -> !FilePath -> !FilePath -> ChallengePaths
+[_cpPromptUrl] :: ChallengePaths -> !FilePath
 [_cpDataUrl] :: ChallengePaths -> !FilePath
+[_cpPrompt] :: ChallengePaths -> !FilePath
 [_cpInput] :: ChallengePaths -> !FilePath
 [_cpAnswer] :: ChallengePaths -> !FilePath
 [_cpTests] :: ChallengePaths -> !FilePath
@@ -4390,30 +4407,54 @@ challengePaths :: ChallengeSpec -> ChallengePaths
 -- | A record of data (test inputs, answers) corresponding to a specific
 --   challenge.
 data ChallengeData
-CD :: !Either [String] String -> !Maybe String -> ![(String, Maybe String)] -> ChallengeData
-[_cdInp] :: ChallengeData -> !Either [String] String
-[_cdAns] :: ChallengeData -> !Maybe String
+CD :: !Either [String] String -> !Either [String] String -> !Maybe String -> ![(String, Maybe String)] -> ChallengeData
+[_cdPrompt] :: ChallengeData -> !Either [String] String
+[_cdInput] :: ChallengeData -> !Either [String] String
+[_cdAnswer] :: ChallengeData -> !Maybe String
 [_cdTests] :: ChallengeData -> ![(String, Maybe String)]
 
 -- | Load data associated with a challenge from a given specification. Will
 --   fetch answers online and cache if required (and if giten a session
 --   token).
 challengeData :: Maybe String -> ChallengeSpec -> IO ChallengeData
+instance GHC.Show.Show AOC2018.Load.ChallengePaths
 
--- | Configuration for auto-runner.
-newtype Config
-Cfg :: Maybe String -> Config
-[_cfgSession] :: Config -> Maybe String
 
--- | Load a <a>Config</a> from a given filepath.
-configFile :: FilePath -> IO Config
+-- | Day 1! Pretty straightforward Haskell pipeline. Parse using
+--   <a>readMaybe</a> (remembering to <a>stripPrefix</a> a positive sign
+--   first).
+--   
+--   The first one is just a simple sum.
+--   
+--   The second one lazily computes a running sum with <tt><a>scanl</a> (+)
+--   0</tt> on the infinitely repeated list of inputs (<a>cycle</a>), and
+--   then uses a custom utility function <a>firstRepeated</a> to get the
+--   first repeated running sum.
+module AOC2018.Challenge.Day01
+day01a :: Challenge
+day01b :: Challenge
 
--- | Default math to find a configuration file.
-defConfPath :: FilePath
 
--- | Load a session token from the configuration file at a given filepath.
-session :: FilePath -> IO (Maybe String)
-instance GHC.Generics.Generic AOC2018.Config
-instance GHC.Show.Show AOC2018.ChallengePaths
-instance Data.Aeson.Types.ToJSON.ToJSON AOC2018.Config
-instance Data.Aeson.Types.FromJSON.FromJSON AOC2018.Config
+-- | Gather together all challenges and collect them into a single map.
+--   Also re-exports general utilities used by the auto-runner executable.
+module AOC2018
+
+-- | A map of all challenges.
+challengeMap :: Map (Finite 25) (Map Char Challenge)
+
+
+-- | Versions of loaders and runners meant to be used in GHCI.
+module AOC2018.Interactive
+
+-- | Run the solution indicated by the challenge spec on the official
+--   puzzle input.
+execChallenge :: ChallengeSpec -> IO ()
+
+-- | Run the solution indicated by the challenge spec on a custom input.
+execChallengeWith :: ChallengeSpec -> String -> IO ()
+
+-- | Run test suite for a given challenge spec.
+testChallenge :: ChallengeSpec -> IO ()
+
+-- | View the prompt for a given challenge spec.
+viewPrompt :: ChallengeSpec -> IO ()
