@@ -4420,9 +4420,9 @@ challengeData :: Maybe String -> ChallengeSpec -> IO ChallengeData
 instance GHC.Show.Show AOC2018.Load.ChallengePaths
 
 
--- | Day 1! Pretty straightforward Haskell pipeline. Parse using
---   <a>readMaybe</a> (remembering to <a>stripPrefix</a> a positive sign
---   first).
+-- | Day 1! Pretty straightforward Haskell pipeline. Parse using manual
+--   pattern matching to strip a '+' prefix, because <a>read</a> can't
+--   handle positive signs in front of numbers.
 --   
 --   The first one is just a simple sum.
 --   
