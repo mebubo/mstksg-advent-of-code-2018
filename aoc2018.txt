@@ -100,6 +100,11 @@ scanlT :: Traversable t => (b -> a -> b) -> b -> t a -> t b
 
 -- | <a>scanr</a> generalized to all <a>Traversable</a>.
 scanrT :: Traversable t => (a -> b -> b) -> b -> t a -> t b
+eitherToMaybe :: Either e a -> Maybe a
+maybeToEither :: e -> Maybe a -> Either e a
+
+-- | Lazily find the first repeated item.
+firstRepeated :: Ord a => [a] -> Maybe a
 
 module AOC2018.Prelude
 
@@ -149,6 +154,26 @@ fst :: () => (a, b) -> a
 
 -- | Extract the second component of a pair.
 snd :: () => (a, b) -> b
+
+-- | The <a>trace</a> function outputs the trace message given as its first
+--   argument, before returning the second argument as its result.
+--   
+--   For example, this returns the value of <tt>f x</tt> but first outputs
+--   the message.
+--   
+--   <pre>
+--   &gt;&gt;&gt; let x = 123; f = show
+--   
+--   &gt;&gt;&gt; trace ("calling f with x = " ++ show x) (f x)
+--   "calling f with x = 123
+--   123"
+--   </pre>
+--   
+--   The <a>trace</a> function should <i>only</i> be used for debugging, or
+--   for monitoring execution. The function is not referentially
+--   transparent: its type indicates that it is a pure function but it has
+--   the side effect of outputting the trace message.
+trace :: () => String -> a -> a
 
 -- | <a>map</a> <tt>f xs</tt> is the list obtained by applying <tt>f</tt>
 --   to each element of <tt>xs</tt>, i.e.,
@@ -2073,6 +2098,200 @@ foldM :: (Foldable t, Monad m) => (b -> a -> m b) -> b -> t a -> m b
 -- | The reverse of <a>when</a>.
 unless :: Applicative f => Bool -> f () -> f ()
 
+-- | A set of values <tt>a</tt>.
+data Set a
+
+-- | A variant of <a>&lt;*&gt;</a> with the arguments reversed.
+(<**>) :: Applicative f => f a -> f (a -> b) -> f b
+infixl 4 <**>
+
+-- | Lift a function to actions. This function may be used as a value for
+--   <a>fmap</a> in a <a>Functor</a> instance.
+liftA :: Applicative f => (a -> b) -> f a -> f b
+
+-- | Lift a ternary function to actions.
+liftA3 :: Applicative f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
+
+-- | Promote a function to a monad, scanning the monadic arguments from
+--   left to right (cf. <a>liftM2</a>).
+liftM3 :: Monad m => (a1 -> a2 -> a3 -> r) -> m a1 -> m a2 -> m a3 -> m r
+
+-- | Promote a function to a monad, scanning the monadic arguments from
+--   left to right (cf. <a>liftM2</a>).
+liftM4 :: Monad m => (a1 -> a2 -> a3 -> a4 -> r) -> m a1 -> m a2 -> m a3 -> m a4 -> m r
+
+-- | Promote a function to a monad, scanning the monadic arguments from
+--   left to right (cf. <a>liftM2</a>).
+liftM5 :: Monad m => (a1 -> a2 -> a3 -> a4 -> a5 -> r) -> m a1 -> m a2 -> m a3 -> m a4 -> m a5 -> m r
+
+-- | <tt><a>fix</a> f</tt> is the least fixed point of the function
+--   <tt>f</tt>, i.e. the least defined <tt>x</tt> such that <tt>f x =
+--   x</tt>.
+--   
+--   For example, we can write the factorial function using direct
+--   recursion as
+--   
+--   <pre>
+--   &gt;&gt;&gt; let fac n = if n &lt;= 1 then 1 else n * fac (n-1) in fac 5
+--   120
+--   </pre>
+--   
+--   This uses the fact that Haskell’s <tt>let</tt> introduces recursive
+--   bindings. We can rewrite this definition using <a>fix</a>,
+--   
+--   <pre>
+--   &gt;&gt;&gt; fix (\rec n -&gt; if n &lt;= 1 then 1 else n * rec (n-1)) 5
+--   120
+--   </pre>
+--   
+--   Instead of making a recursive call, we introduce a dummy parameter
+--   <tt>rec</tt>; when used within <a>fix</a>, this parameter then refers
+--   to <tt>fix'</tt> argument, hence the recursion is reintroduced.
+fix :: () => (a -> a) -> a
+
+-- | Parse a string using the <a>Read</a> instance. Succeeds if there is
+--   exactly one valid result.
+--   
+--   <pre>
+--   &gt;&gt;&gt; readMaybe "123" :: Maybe Int
+--   Just 123
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; readMaybe "hello" :: Maybe Int
+--   Nothing
+--   </pre>
+readMaybe :: Read a => String -> Maybe a
+
+-- | Map each element of a structure to a monadic action, evaluate these
+--   actions from left to right, and ignore the results. For a version that
+--   doesn't ignore the results see <a>mapM</a>.
+--   
+--   As of base 4.8.0.0, <a>mapM_</a> is just <a>traverse_</a>, specialized
+--   to <a>Monad</a>.
+mapM_ :: (Foldable t, Monad m) => (a -> m b) -> t a -> m ()
+
+-- | <a>forM_</a> is <a>mapM_</a> with its arguments flipped. For a version
+--   that doesn't ignore the results see <a>forM</a>.
+--   
+--   As of base 4.8.0.0, <a>forM_</a> is just <a>for_</a>, specialized to
+--   <a>Monad</a>.
+forM_ :: (Foldable t, Monad m) => t a -> (a -> m b) -> m ()
+
+-- | The sum of a collection of actions, generalizing <a>concat</a>. As of
+--   base 4.8.0.0, <a>msum</a> is just <a>asum</a>, specialized to
+--   <a>MonadPlus</a>.
+msum :: (Foldable t, MonadPlus m) => t (m a) -> m a
+
+-- | The <a>Const</a> functor.
+newtype Const a (b :: k) :: forall k. () => Type -> k -> Type
+Const :: a -> Const a
+[getConst] :: Const a -> a
+
+-- | Lists, but with an <a>Applicative</a> functor based on zipping.
+newtype ZipList a
+ZipList :: [a] -> ZipList a
+[getZipList] :: ZipList a -> [a]
+newtype WrappedArrow (a :: Type -> Type -> Type) b c
+WrapArrow :: a b c -> WrappedArrow b c
+[unwrapArrow] :: WrappedArrow b c -> a b c
+newtype WrappedMonad (m :: Type -> Type) a
+WrapMonad :: m a -> WrappedMonad a
+[unwrapMonad] :: WrappedMonad a -> m a
+
+-- | <a>forM</a> is <a>mapM</a> with its arguments flipped. For a version
+--   that ignores the results see <a>forM_</a>.
+forM :: (Traversable t, Monad m) => t a -> (a -> m b) -> m (t b)
+
+-- | Left-to-right composition of Kleisli arrows.
+(>=>) :: Monad m => (a -> m b) -> (b -> m c) -> a -> m c
+infixr 1 >=>
+
+-- | Right-to-left composition of Kleisli arrows.
+--   <tt>(<a>&gt;=&gt;</a>)</tt>, with the arguments flipped.
+--   
+--   Note how this operator resembles function composition
+--   <tt>(<a>.</a>)</tt>:
+--   
+--   <pre>
+--   (.)   ::            (b -&gt;   c) -&gt; (a -&gt;   b) -&gt; a -&gt;   c
+--   (&lt;=&lt;) :: Monad m =&gt; (b -&gt; m c) -&gt; (a -&gt; m b) -&gt; a -&gt; m c
+--   </pre>
+(<=<) :: Monad m => (b -> m c) -> (a -> m b) -> a -> m c
+infixr 1 <=<
+
+-- | Repeat an action indefinitely.
+--   
+--   <h4><b>Examples</b></h4>
+--   
+--   A common use of <a>forever</a> is to process input from network
+--   sockets, <a>Handle</a>s, and channels (e.g. <a>MVar</a> and
+--   <a>Chan</a>).
+--   
+--   For example, here is how we might implement an <a>echo server</a>,
+--   using <a>forever</a> both to listen for client connections on a
+--   network socket and to echo client input on client connection handles:
+--   
+--   <pre>
+--   echoServer :: Socket -&gt; IO ()
+--   echoServer socket = <a>forever</a> $ do
+--     client &lt;- accept socket
+--     <a>forkFinally</a> (echo client) (\_ -&gt; hClose client)
+--     where
+--       echo :: Handle -&gt; IO ()
+--       echo client = <a>forever</a> $
+--         hGetLine client &gt;&gt;= hPutStrLn client
+--   </pre>
+forever :: Applicative f => f a -> f b
+
+-- | The <a>mapAndUnzipM</a> function maps its first argument over a list,
+--   returning the result as a pair of lists. This function is mainly used
+--   with complicated data structures or a state-transforming monad.
+mapAndUnzipM :: Applicative m => (a -> m (b, c)) -> [a] -> m ([b], [c])
+
+-- | The <a>zipWithM</a> function generalizes <a>zipWith</a> to arbitrary
+--   applicative functors.
+zipWithM :: Applicative m => (a -> b -> m c) -> [a] -> [b] -> m [c]
+
+-- | <a>zipWithM_</a> is the extension of <a>zipWithM</a> which ignores the
+--   final result.
+zipWithM_ :: Applicative m => (a -> b -> m c) -> [a] -> [b] -> m ()
+
+-- | Like <a>foldM</a>, but discards the result.
+foldM_ :: (Foldable t, Monad m) => (b -> a -> m b) -> b -> t a -> m ()
+
+-- | <tt><a>replicateM</a> n act</tt> performs the action <tt>n</tt> times,
+--   gathering the results.
+replicateM :: Applicative m => Int -> m a -> m [a]
+
+-- | Like <a>replicateM</a>, but discards the result.
+replicateM_ :: Applicative m => Int -> m a -> m ()
+
+-- | Strict version of <a>&lt;$&gt;</a>.
+(<$!>) :: Monad m => (a -> b) -> m a -> m b
+infixl 4 <$!>
+
+-- | Direct <a>MonadPlus</a> equivalent of <a>filter</a>.
+--   
+--   <h4><b>Examples</b></h4>
+--   
+--   The <a>filter</a> function is just <a>mfilter</a> specialized to the
+--   list monad:
+--   
+--   <pre>
+--   <a>filter</a> = ( <a>mfilter</a> :: (a -&gt; Bool) -&gt; [a] -&gt; [a] )
+--   </pre>
+--   
+--   An example using <a>mfilter</a> with the <a>Maybe</a> monad:
+--   
+--   <pre>
+--   &gt;&gt;&gt; mfilter odd (Just 1)
+--   Just 1
+--   &gt;&gt;&gt; mfilter odd (Just 2)
+--   Nothing
+--   </pre>
+mfilter :: MonadPlus m => (a -> Bool) -> m a -> m a
+
 -- | If <a>Void</a> is uninhabited then any <a>Functor</a> that holds only
 --   values of type <a>Void</a> is holding no values.
 vacuous :: Functor f => f Void -> f a
@@ -2573,94 +2792,139 @@ type FieldFormatter = FieldFormat -> ShowS
 --   string.
 type ModifierParser = String -> FormatParse
 
--- | Direct <a>MonadPlus</a> equivalent of <a>filter</a>.
+-- | The <a>traceMarkerIO</a> function emits a marker to the eventlog, if
+--   eventlog profiling is available and enabled at runtime.
 --   
---   <h4><b>Examples</b></h4>
+--   Compared to <a>traceMarker</a>, <a>traceMarkerIO</a> sequences the
+--   event with respect to other IO actions.
+traceMarkerIO :: String -> IO ()
+
+-- | The <a>traceMarker</a> function emits a marker to the eventlog, if
+--   eventlog profiling is available and enabled at runtime. The
+--   <tt>String</tt> is the name of the marker. The name is just used in
+--   the profiling tools to help you keep clear which marker is which.
 --   
---   The <a>filter</a> function is just <a>mfilter</a> specialized to the
---   list monad:
+--   This function is suitable for use in pure code. In an IO context use
+--   <a>traceMarkerIO</a> instead.
+--   
+--   Note that when using GHC's SMP runtime, it is possible (but rare) to
+--   get duplicate events emitted if two CPUs simultaneously evaluate the
+--   same thunk that uses <a>traceMarker</a>.
+traceMarker :: () => String -> a -> a
+
+-- | The <a>traceEventIO</a> function emits a message to the eventlog, if
+--   eventlog profiling is available and enabled at runtime.
+--   
+--   Compared to <a>traceEvent</a>, <a>traceEventIO</a> sequences the event
+--   with respect to other IO actions.
+traceEventIO :: String -> IO ()
+
+-- | The <a>traceEvent</a> function behaves like <a>trace</a> with the
+--   difference that the message is emitted to the eventlog, if eventlog
+--   profiling is available and enabled at runtime.
+--   
+--   It is suitable for use in pure code. In an IO context use
+--   <a>traceEventIO</a> instead.
+--   
+--   Note that when using GHC's SMP runtime, it is possible (but rare) to
+--   get duplicate events emitted if two CPUs simultaneously evaluate the
+--   same thunk that uses <a>traceEvent</a>.
+traceEvent :: () => String -> a -> a
+
+-- | like <a>trace</a>, but additionally prints a call stack if one is
+--   available.
+--   
+--   In the current GHC implementation, the call stack is only available if
+--   the program was compiled with <tt>-prof</tt>; otherwise
+--   <a>traceStack</a> behaves exactly like <a>trace</a>. Entries in the
+--   call stack correspond to <tt>SCC</tt> annotations, so it is a good
+--   idea to use <tt>-fprof-auto</tt> or <tt>-fprof-auto-calls</tt> to add
+--   SCC annotations automatically.
+traceStack :: () => String -> a -> a
+
+-- | Like <a>traceM</a>, but uses <a>show</a> on the argument to convert it
+--   to a <a>String</a>.
 --   
 --   <pre>
---   <a>filter</a> = ( <a>mfilter</a> :: (a -&gt; Bool) -&gt; [a] -&gt; [a] )
+--   &gt;&gt;&gt; :{
+--   do
+--       x &lt;- Just 3
+--       traceShowM x
+--       y &lt;- pure 12
+--       traceShowM y
+--       pure (x*2 + y)
+--   :}
+--   3
+--   12
+--   Just 18
 --   </pre>
+traceShowM :: (Show a, Applicative f) => a -> f ()
+
+-- | Like <a>trace</a> but returning unit in an arbitrary
+--   <a>Applicative</a> context. Allows for convenient use in do-notation.
 --   
---   An example using <a>mfilter</a> with the <a>Maybe</a> monad:
+--   Note that the application of <a>traceM</a> is not an action in the
+--   <a>Applicative</a> context, as <a>traceIO</a> is in the <a>IO</a>
+--   type. While the fresh bindings in the following example will force the
+--   <a>traceM</a> expressions to be reduced every time the
+--   <tt>do</tt>-block is executed, <tt>traceM "not crashed"</tt> would
+--   only be reduced once, and the message would only be printed once. If
+--   your monad is in <tt>MonadIO</tt>, <tt>liftIO . traceIO</tt> may be a
+--   better option.
 --   
 --   <pre>
---   &gt;&gt;&gt; mfilter odd (Just 1)
---   Just 1
---   &gt;&gt;&gt; mfilter odd (Just 2)
---   Nothing
+--   &gt;&gt;&gt; :{
+--   do
+--       x &lt;- Just 3
+--       traceM ("x: " ++ show x)
+--       y &lt;- pure 12
+--       traceM ("y: " ++ show y)
+--       pure (x*2 + y)
+--   :}
+--   x: 3
+--   y: 12
+--   Just 18
 --   </pre>
-mfilter :: MonadPlus m => (a -> Bool) -> m a -> m a
+traceM :: Applicative f => String -> f ()
 
--- | Strict version of <a>&lt;$&gt;</a>.
-(<$!>) :: Monad m => (a -> b) -> m a -> m b
-infixl 4 <$!>
-
--- | Like <a>replicateM</a>, but discards the result.
-replicateM_ :: Applicative m => Int -> m a -> m ()
-
--- | <tt><a>replicateM</a> n act</tt> performs the action <tt>n</tt> times,
---   gathering the results.
-replicateM :: Applicative m => Int -> m a -> m [a]
-
--- | Like <a>foldM</a>, but discards the result.
-foldM_ :: (Foldable t, Monad m) => (b -> a -> m b) -> b -> t a -> m ()
-
--- | <a>zipWithM_</a> is the extension of <a>zipWithM</a> which ignores the
---   final result.
-zipWithM_ :: Applicative m => (a -> b -> m c) -> [a] -> [b] -> m ()
-
--- | The <a>zipWithM</a> function generalizes <a>zipWith</a> to arbitrary
---   applicative functors.
-zipWithM :: Applicative m => (a -> b -> m c) -> [a] -> [b] -> m [c]
-
--- | The <a>mapAndUnzipM</a> function maps its first argument over a list,
---   returning the result as a pair of lists. This function is mainly used
---   with complicated data structures or a state-transforming monad.
-mapAndUnzipM :: Applicative m => (a -> m (b, c)) -> [a] -> m ([b], [c])
-
--- | Repeat an action indefinitely.
---   
---   <h4><b>Examples</b></h4>
---   
---   A common use of <a>forever</a> is to process input from network
---   sockets, <a>Handle</a>s, and channels (e.g. <a>MVar</a> and
---   <a>Chan</a>).
---   
---   For example, here is how we might implement an <a>echo server</a>,
---   using <a>forever</a> both to listen for client connections on a
---   network socket and to echo client input on client connection handles:
+-- | Like <a>traceShow</a> but returns the shown value instead of a third
+--   value.
 --   
 --   <pre>
---   echoServer :: Socket -&gt; IO ()
---   echoServer socket = <a>forever</a> $ do
---     client &lt;- accept socket
---     <a>forkFinally</a> (echo client) (\_ -&gt; hClose client)
---     where
---       echo :: Handle -&gt; IO ()
---       echo client = <a>forever</a> $
---         hGetLine client &gt;&gt;= hPutStrLn client
+--   &gt;&gt;&gt; traceShowId (1+2+3, "hello" ++ "world")
+--   (6,"helloworld")
+--   (6,"helloworld")
 --   </pre>
-forever :: Applicative f => f a -> f b
+traceShowId :: Show a => a -> a
 
--- | Right-to-left composition of Kleisli arrows.
---   <tt>(<a>&gt;=&gt;</a>)</tt>, with the arguments flipped.
+-- | Like <a>trace</a>, but uses <a>show</a> on the argument to convert it
+--   to a <a>String</a>.
 --   
---   Note how this operator resembles function composition
---   <tt>(<a>.</a>)</tt>:
+--   This makes it convenient for printing the values of interesting
+--   variables or expressions inside a function. For example here we print
+--   the value of the variables <tt>x</tt> and <tt>y</tt>:
 --   
 --   <pre>
---   (.)   ::            (b -&gt;   c) -&gt; (a -&gt;   b) -&gt; a -&gt;   c
---   (&lt;=&lt;) :: Monad m =&gt; (b -&gt; m c) -&gt; (a -&gt; m b) -&gt; a -&gt; m c
+--   &gt;&gt;&gt; let f x y = traceShow (x,y) (x + y) in f (1+2) 5
+--   (3,5)
+--   8
 --   </pre>
-(<=<) :: Monad m => (b -> m c) -> (a -> m b) -> a -> m c
-infixr 1 <=<
+traceShow :: Show a => a -> b -> b
 
--- | Left-to-right composition of Kleisli arrows.
-(>=>) :: Monad m => (a -> m b) -> (b -> m c) -> a -> m c
-infixr 1 >=>
+-- | Like <a>trace</a> but returns the message instead of a third value.
+--   
+--   <pre>
+--   &gt;&gt;&gt; traceId "hello"
+--   "hello
+--   hello"
+--   </pre>
+traceId :: String -> String
+
+putTraceMsg :: String -> IO ()
+
+-- | The <a>traceIO</a> function outputs the trace message from the IO
+--   monad. This sequences the output with respect to other IO actions.
+traceIO :: String -> IO ()
 
 -- | The <a>isSubsequenceOf</a> function takes two lists and returns
 --   <a>True</a> if all the elements of the first list occur, in order, in
@@ -2715,26 +2979,6 @@ mapAccumR :: Traversable t => (a -> b -> (a, c)) -> a -> t b -> (a, t c)
 --   structure.
 mapAccumL :: Traversable t => (a -> b -> (a, c)) -> a -> t b -> (a, t c)
 
--- | <a>forM</a> is <a>mapM</a> with its arguments flipped. For a version
---   that ignores the results see <a>forM_</a>.
-forM :: (Traversable t, Monad m) => t a -> (a -> m b) -> m (t b)
-newtype WrappedMonad (m :: Type -> Type) a
-WrapMonad :: m a -> WrappedMonad a
-[unwrapMonad] :: WrappedMonad a -> m a
-newtype WrappedArrow (a :: Type -> Type -> Type) b c
-WrapArrow :: a b c -> WrappedArrow b c
-[unwrapArrow] :: WrappedArrow b c -> a b c
-
--- | Lists, but with an <a>Applicative</a> functor based on zipping.
-newtype ZipList a
-ZipList :: [a] -> ZipList a
-[getZipList] :: ZipList a -> [a]
-
--- | The <a>Const</a> functor.
-newtype Const a (b :: k) :: forall k. () => Type -> k -> Type
-Const :: a -> Const a
-[getConst] :: Const a -> a
-
 -- | The least element of a non-empty structure with respect to the given
 --   comparison function.
 minimumBy :: Foldable t => (a -> a -> Ordering) -> t a -> a
@@ -2742,11 +2986,6 @@ minimumBy :: Foldable t => (a -> a -> Ordering) -> t a -> a
 -- | The largest element of a non-empty structure with respect to the given
 --   comparison function.
 maximumBy :: Foldable t => (a -> a -> Ordering) -> t a -> a
-
--- | The sum of a collection of actions, generalizing <a>concat</a>. As of
---   base 4.8.0.0, <a>msum</a> is just <a>asum</a>, specialized to
---   <a>MonadPlus</a>.
-msum :: (Foldable t, MonadPlus m) => t (m a) -> m a
 
 -- | The sum of a collection of actions, generalizing <a>concat</a>.
 --   
@@ -2757,21 +2996,6 @@ asum :: (Foldable t, Alternative f) => t (f a) -> f a
 --   the results. For a version that doesn't ignore the results see
 --   <a>sequenceA</a>.
 sequenceA_ :: (Foldable t, Applicative f) => t (f a) -> f ()
-
--- | <a>forM_</a> is <a>mapM_</a> with its arguments flipped. For a version
---   that doesn't ignore the results see <a>forM</a>.
---   
---   As of base 4.8.0.0, <a>forM_</a> is just <a>for_</a>, specialized to
---   <a>Monad</a>.
-forM_ :: (Foldable t, Monad m) => t a -> (a -> m b) -> m ()
-
--- | Map each element of a structure to a monadic action, evaluate these
---   actions from left to right, and ignore the results. For a version that
---   doesn't ignore the results see <a>mapM</a>.
---   
---   As of base 4.8.0.0, <a>mapM_</a> is just <a>traverse_</a>, specialized
---   to <a>Monad</a>.
-mapM_ :: (Foldable t, Monad m) => (a -> m b) -> t a -> m ()
 
 -- | Monadic fold over the elements of a structure, associating to the
 --   left, i.e. from left to right.
@@ -3450,20 +3674,6 @@ isLetter :: Char -> Bool
 --   </pre>
 digitToInt :: Char -> Int
 
--- | Parse a string using the <a>Read</a> instance. Succeeds if there is
---   exactly one valid result.
---   
---   <pre>
---   &gt;&gt;&gt; readMaybe "123" :: Maybe Int
---   Just 123
---   </pre>
---   
---   <pre>
---   &gt;&gt;&gt; readMaybe "hello" :: Maybe Int
---   Nothing
---   </pre>
-readMaybe :: Read a => String -> Maybe a
-
 -- | Read a string representation of a character, using Haskell
 --   source-language escape conventions, and convert it to the character
 --   that it encodes. For example:
@@ -3845,31 +4055,6 @@ infixl 1 &
 on :: () => (b -> b -> c) -> (a -> b) -> a -> a -> c
 infixl 0 `on`
 
--- | <tt><a>fix</a> f</tt> is the least fixed point of the function
---   <tt>f</tt>, i.e. the least defined <tt>x</tt> such that <tt>f x =
---   x</tt>.
---   
---   For example, we can write the factorial function using direct
---   recursion as
---   
---   <pre>
---   &gt;&gt;&gt; let fac n = if n &lt;= 1 then 1 else n * fac (n-1) in fac 5
---   120
---   </pre>
---   
---   This uses the fact that Haskell’s <tt>let</tt> introduces recursive
---   bindings. We can rewrite this definition using <a>fix</a>,
---   
---   <pre>
---   &gt;&gt;&gt; fix (\rec n -&gt; if n &lt;= 1 then 1 else n * rec (n-1)) 5
---   120
---   </pre>
---   
---   Instead of making a recursive call, we introduce a dummy parameter
---   <tt>rec</tt>; when used within <a>fix</a>, this parameter then refers
---   to <tt>fix'</tt> argument, hence the recursion is reintroduced.
-fix :: () => (a -> a) -> a
-
 -- | Convert an <a>Int</a> in the range <tt>0</tt>..<tt>15</tt> to the
 --   corresponding single digit <a>Char</a>. This function fails on other
 --   inputs, and generates lower-case hexadecimal digits.
@@ -3927,29 +4112,6 @@ fromJust :: () => Maybe a -> a
 -- | Swap the components of a pair.
 swap :: () => (a, b) -> (b, a)
 
--- | Promote a function to a monad, scanning the monadic arguments from
---   left to right (cf. <a>liftM2</a>).
-liftM5 :: Monad m => (a1 -> a2 -> a3 -> a4 -> a5 -> r) -> m a1 -> m a2 -> m a3 -> m a4 -> m a5 -> m r
-
--- | Promote a function to a monad, scanning the monadic arguments from
---   left to right (cf. <a>liftM2</a>).
-liftM4 :: Monad m => (a1 -> a2 -> a3 -> a4 -> r) -> m a1 -> m a2 -> m a3 -> m a4 -> m r
-
--- | Promote a function to a monad, scanning the monadic arguments from
---   left to right (cf. <a>liftM2</a>).
-liftM3 :: Monad m => (a1 -> a2 -> a3 -> r) -> m a1 -> m a2 -> m a3 -> m r
-
--- | Lift a ternary function to actions.
-liftA3 :: Applicative f => (a -> b -> c -> d) -> f a -> f b -> f c -> f d
-
--- | Lift a function to actions. This function may be used as a value for
---   <a>fmap</a> in a <a>Functor</a> instance.
-liftA :: Applicative f => (a -> b) -> f a -> f b
-
--- | A variant of <a>&lt;*&gt;</a> with the arguments reversed.
-(<**>) :: Applicative f => f a -> f (a -> b) -> f b
-infixl 4 <**>
-
 -- | This is a valid definition of <a>stimes</a> for an idempotent
 --   <a>Monoid</a>.
 --   
@@ -3962,9 +4124,6 @@ data IntMap a
 
 -- | A set of integers.
 data IntSet
-
--- | A set of values <tt>a</tt>.
-data Set a
 
 -- | Lift the standard <a>rnf</a> function through the type constructor.
 rnf2 :: (NFData2 p, NFData a, NFData b) => p a b -> ()
@@ -4197,11 +4356,17 @@ scanlT :: Traversable t => (b -> a -> b) -> b -> t a -> t b
 
 -- | <a>scanr</a> generalized to all <a>Traversable</a>.
 scanrT :: Traversable t => (a -> b -> b) -> b -> t a -> t b
+eitherToMaybe :: Either e a -> Maybe a
+maybeToEither :: e -> Maybe a -> Either e a
+
+-- | Lazily find the first repeated item.
+firstRepeated :: Ord a => [a] -> Maybe a
 
 
 -- | Day 1!
 module AOC2018.Challenge.Day01
 day01a :: Challenge
+day01b :: Challenge
 
 
 -- | Gather together all challenges and collect them into a single map.
