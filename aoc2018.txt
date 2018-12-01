@@ -13,57 +13,6 @@
 @version 0.1.0.0
 
 
--- | Types to drive the challenge runner and help speed up/clean up
---   solutions.
-module AOC2018.Challenge
-
--- | Abstracting over the type of a challenge solver to help with cleaner
---   solutions.
---   
---   Consists of a parser, a shower, and a solver. The solver solves a
---   general <tt>a -&gt; <a>Maybe</a> b</tt> function, and the parser and
---   shower are used to handle the boilerplate of parsing and printing the
---   solution.
-data Challenge
-[MkC] :: {cParse :: String -> Maybe a " parse input into an @a@", cSolve :: a -> Maybe b " solve an @a@ input to a @b@ solution", cShow :: b -> String " print out the @b@ solution in a pretty way"} -> Challenge
-
--- | Construct a <a>Challenge</a> from a <tt>String -&gt; <a>Maybe</a>
---   String</tt> solver, which might fail. Does no parsing or special
---   printing treatment.
-withSolver :: (String -> Maybe String) -> Challenge
-
--- | Construct a <a>Challenge</a> from just a normal <tt>String -&gt;
---   String</tt> solver. Does no parsing or special printing treatment.
-withSolver' :: (String -> String) -> Challenge
-
--- | Errors that might happen when running a <a>Challenge</a> on some
---   input.
-data ChallengeError
-CEParse :: ChallengeError
-CESolve :: ChallengeError
-
--- | Run a <a>Challenge</a> on some input.
-runChallenge :: Challenge -> String -> Either ChallengeError String
-
--- | Run a <a>Challenge</a> on some input, retuning <a>Maybe</a>
-runChallenge' :: Challenge -> String -> Maybe String
-
--- | A map of days to parts to challenges.
-type ChallengeMap = Map (Finite 25) (Map Char Challenge)
-
--- | A specification for a specific challenge. Should consist of a day and
---   a lowercase character.
-data ChallengeSpec
-CS :: Finite 25 -> Char -> ChallengeSpec
-[_csDay] :: ChallengeSpec -> Finite 25
-[_csPart] :: ChallengeSpec -> Char
-instance GHC.Generics.Generic AOC2018.Challenge.ChallengeError
-instance GHC.Classes.Ord AOC2018.Challenge.ChallengeError
-instance GHC.Classes.Eq AOC2018.Challenge.ChallengeError
-instance GHC.Show.Show AOC2018.Challenge.ChallengeError
-instance Control.DeepSeq.NFData AOC2018.Challenge.ChallengeError
-
-
 -- | Utilities for loading configuration file.
 module AOC2018.Config
 
@@ -83,27 +32,6 @@ session :: FilePath -> IO (Maybe String)
 instance GHC.Generics.Generic AOC2018.Config.Config
 instance Data.Aeson.Types.ToJSON.ToJSON AOC2018.Config.Config
 instance Data.Aeson.Types.FromJSON.FromJSON AOC2018.Config.Config
-
-
--- | Template Haskell for discovering all named challenges in a given
---   directory.
-module AOC2018.Discover
-
--- | Meant to be called like:
---   
---   <pre>
---   mkChallengeMap $$(challengeList "src/AOC2018/Challenge")
---   </pre>
-mkChallengeMap :: [(Finite 25, (Char, Challenge))] -> ChallengeMap
-
--- | Template Haskell splice to produce a list of all named challenges in a
---   directory. Expects challenges as function names following the format
---   <tt>dayDDp</tt>, where <tt>DD</tt> is a two-digit zero-added day, and
---   <tt>p</tt> is a lower-case letter corresponding to the part of the
---   challenge.
---   
---   See <a>mkChallengeMap</a> for a description of usage.
-challengeList :: FilePath -> Q (TExp [(Finite 25, (Char, Challenge))])
 
 
 -- | Assorted utility functions and orphans used for solutions.
@@ -129,6 +57,74 @@ maybeToEither :: e -> Maybe a -> Either e a
 
 -- | Lazily find the first repeated item.
 firstRepeated :: Ord a => [a] -> Maybe a
+
+
+-- | Types to drive the challenge runner and help speed up/clean up
+--   solutions.
+module AOC2018.Challenge
+
+-- | Abstracting over the type of a challenge solver to help with cleaner
+--   solutions.
+--   
+--   A <tt>a <a>:~&gt;</a> b</tt> encapsulates something that solves a
+--   challenge with input type <tt>a</tt> into a response of type
+--   <tt>b</tt>.
+--   
+--   Consists of a parser, a shower, and a solver. The solver solves a
+--   general <tt>a -&gt; <a>Maybe</a> b</tt> function, and the parser and
+--   shower are used to handle the boilerplate of parsing and printing the
+--   solution.
+data a :~> b
+MkSol :: (String -> Maybe a) -> (a -> Maybe b) -> (b -> String) -> (:~>) a b
+
+-- | parse input into an <tt>a</tt>
+[sParse] :: (:~>) a b -> String -> Maybe a
+
+-- | solve an <tt>a</tt> input to a <tt>b</tt> solution
+[sSolve] :: (:~>) a b -> a -> Maybe b
+
+-- | print out the <tt>b</tt> solution in a pretty way
+[sShow] :: (:~>) a b -> b -> String
+
+-- | Construct a <a>:~&gt;</a> from a <tt>String -&gt; <a>Maybe</a>
+--   String</tt> solver, which might fail. Does no parsing or special
+--   printing treatment.
+withSolver :: (String -> Maybe String) -> String :~> String
+
+-- | Construct a <a>:~&gt;</a> from just a normal <tt>String -&gt;
+--   String</tt> solver. Does no parsing or special printing treatment.
+withSolver' :: (String -> String) -> String :~> String
+
+-- | Wrap an <tt>a <a>:~&gt;</a> b</tt> and hide the type variables so we
+--   can put different solutions in a container.
+data SomeSolution
+[MkSomeSol] :: (a :~> b) -> SomeSolution
+
+-- | Errors that might happen when running a <a>:~&gt;</a> on some input.
+data SolutionError
+SEParse :: SolutionError
+SESolve :: SolutionError
+
+-- | Run a <a>:~&gt;</a> on some input.
+runSolution :: (a :~> b) -> String -> Either SolutionError String
+
+-- | Run a <a>SomeSolution</a> on some input.
+runSomeSolution :: SomeSolution -> String -> Either SolutionError String
+
+-- | A map of days to parts to solutions.
+type ChallengeMap = Map (Finite 25) (Map Char SomeSolution)
+
+-- | A specification for a specific challenge. Should consist of a day and
+--   a lowercase character.
+data ChallengeSpec
+CS :: Finite 25 -> Char -> ChallengeSpec
+[_csDay] :: ChallengeSpec -> Finite 25
+[_csPart] :: ChallengeSpec -> Char
+instance GHC.Generics.Generic AOC2018.Challenge.SolutionError
+instance GHC.Classes.Ord AOC2018.Challenge.SolutionError
+instance GHC.Classes.Eq AOC2018.Challenge.SolutionError
+instance GHC.Show.Show AOC2018.Challenge.SolutionError
+instance Control.DeepSeq.NFData AOC2018.Challenge.SolutionError
 
 
 -- | Custom Prelude while developing challenges. Ideally, once challenges
@@ -4331,47 +4327,6 @@ rmap :: Profunctor p => (b -> c) -> p a b -> p a c
 --   current position in the list structure.
 data PointedList a
 
--- | A specification for a specific challenge. Should consist of a day and
---   a lowercase character.
-data ChallengeSpec
-CS :: Finite 25 -> Char -> ChallengeSpec
-[_csDay] :: ChallengeSpec -> Finite 25
-[_csPart] :: ChallengeSpec -> Char
-
--- | A map of days to parts to challenges.
-type ChallengeMap = Map (Finite 25) (Map Char Challenge)
-
--- | Errors that might happen when running a <a>Challenge</a> on some
---   input.
-data ChallengeError
-CEParse :: ChallengeError
-CESolve :: ChallengeError
-
--- | Abstracting over the type of a challenge solver to help with cleaner
---   solutions.
---   
---   Consists of a parser, a shower, and a solver. The solver solves a
---   general <tt>a -&gt; <a>Maybe</a> b</tt> function, and the parser and
---   shower are used to handle the boilerplate of parsing and printing the
---   solution.
-data Challenge
-[MkC] :: {cParse :: String -> Maybe a " parse input into an @a@", cSolve :: a -> Maybe b " solve an @a@ input to a @b@ solution", cShow :: b -> String " print out the @b@ solution in a pretty way"} -> Challenge
-
--- | Construct a <a>Challenge</a> from just a normal <tt>String -&gt;
---   String</tt> solver. Does no parsing or special printing treatment.
-withSolver' :: (String -> String) -> Challenge
-
--- | Construct a <a>Challenge</a> from a <tt>String -&gt; <a>Maybe</a>
---   String</tt> solver, which might fail. Does no parsing or special
---   printing treatment.
-withSolver :: (String -> Maybe String) -> Challenge
-
--- | Run a <a>Challenge</a> on some input.
-runChallenge :: Challenge -> String -> Either ChallengeError String
-
--- | Run a <a>Challenge</a> on some input, retuning <a>Maybe</a>
-runChallenge' :: Challenge -> String -> Maybe String
-
 -- | Strict (!!)
 (!!!) :: [a] -> Int -> a
 
@@ -4393,11 +4348,69 @@ maybeToEither :: e -> Maybe a -> Either e a
 -- | Lazily find the first repeated item.
 firstRepeated :: Ord a => [a] -> Maybe a
 
+-- | Errors that might happen when running a <a>:~&gt;</a> on some input.
+data SolutionError
+SEParse :: SolutionError
+SESolve :: SolutionError
+
+-- | A map of days to parts to solutions.
+type ChallengeMap = Map (Finite 25) (Map Char SomeSolution)
+
+-- | Wrap an <tt>a <a>:~&gt;</a> b</tt> and hide the type variables so we
+--   can put different solutions in a container.
+data SomeSolution
+[MkSomeSol] :: (a :~> b) -> SomeSolution
+
+-- | Abstracting over the type of a challenge solver to help with cleaner
+--   solutions.
+--   
+--   A <tt>a <a>:~&gt;</a> b</tt> encapsulates something that solves a
+--   challenge with input type <tt>a</tt> into a response of type
+--   <tt>b</tt>.
+--   
+--   Consists of a parser, a shower, and a solver. The solver solves a
+--   general <tt>a -&gt; <a>Maybe</a> b</tt> function, and the parser and
+--   shower are used to handle the boilerplate of parsing and printing the
+--   solution.
+data a :~> b
+MkSol :: (String -> Maybe a) -> (a -> Maybe b) -> (b -> String) -> (:~>) a b
+
+-- | parse input into an <tt>a</tt>
+[sParse] :: (:~>) a b -> String -> Maybe a
+
+-- | solve an <tt>a</tt> input to a <tt>b</tt> solution
+[sSolve] :: (:~>) a b -> a -> Maybe b
+
+-- | print out the <tt>b</tt> solution in a pretty way
+[sShow] :: (:~>) a b -> b -> String
+
+-- | A specification for a specific challenge. Should consist of a day and
+--   a lowercase character.
+data ChallengeSpec
+CS :: Finite 25 -> Char -> ChallengeSpec
+[_csDay] :: ChallengeSpec -> Finite 25
+[_csPart] :: ChallengeSpec -> Char
+
+-- | Construct a <a>:~&gt;</a> from just a normal <tt>String -&gt;
+--   String</tt> solver. Does no parsing or special printing treatment.
+withSolver' :: (String -> String) -> String :~> String
+
+-- | Construct a <a>:~&gt;</a> from a <tt>String -&gt; <a>Maybe</a>
+--   String</tt> solver, which might fail. Does no parsing or special
+--   printing treatment.
+withSolver :: (String -> Maybe String) -> String :~> String
+
+-- | Run a <a>:~&gt;</a> on some input.
+runSolution :: (a :~> b) -> String -> Either SolutionError String
+
+-- | Run a <a>SomeSolution</a> on some input.
+runSomeSolution :: SomeSolution -> String -> Either SolutionError String
+
 
 -- | Day 2!
 module AOC2018.Challenge.Day02
-day02a :: Challenge
-day02b :: Challenge
+day02a :: String :~> String
+day02b :: String :~> String
 
 
 -- | Loading challenge data and prompts.
@@ -4405,9 +4418,10 @@ module AOC2018.Load
 
 -- | A record of paths corresponding to a specific challenge.
 data ChallengePaths
-CP :: !FilePath -> !FilePath -> !FilePath -> !FilePath -> !FilePath -> !FilePath -> ChallengePaths
+CP :: !FilePath -> !FilePath -> !FilePath -> !FilePath -> !FilePath -> !FilePath -> !FilePath -> ChallengePaths
 [_cpPromptUrl] :: ChallengePaths -> !FilePath
 [_cpDataUrl] :: ChallengePaths -> !FilePath
+[_cpSubmitUrl] :: ChallengePaths -> !FilePath
 [_cpPrompt] :: ChallengePaths -> !FilePath
 [_cpInput] :: ChallengePaths -> !FilePath
 [_cpAnswer] :: ChallengePaths -> !FilePath
@@ -4432,6 +4446,27 @@ challengeData :: Maybe String -> ChallengeSpec -> IO ChallengeData
 instance GHC.Show.Show AOC2018.Load.ChallengePaths
 
 
+-- | Template Haskell for discovering all named challenges in a given
+--   directory.
+module AOC2018.Discover
+
+-- | Meant to be called like:
+--   
+--   <pre>
+--   mkChallengeMap $$(solutionList "src/AOC2018/Challenge")
+--   </pre>
+mkChallengeMap :: [(Finite 25, (Char, SomeSolution))] -> ChallengeMap
+
+-- | Template Haskell splice to produce a list of all named solutions in a
+--   directory. Expects solutions as function names following the format
+--   <tt>dayDDp</tt>, where <tt>DD</tt> is a two-digit zero-added day, and
+--   <tt>p</tt> is a lower-case letter corresponding to the part of the
+--   challenge.
+--   
+--   See <a>mkChallengeMap</a> for a description of usage.
+solutionList :: FilePath -> Q (TExp [(Finite 25, (Char, SomeSolution))])
+
+
 -- | Day 1! Pretty straightforward Haskell pipeline. Parse using manual
 --   pattern matching to strip a '+' prefix, because <a>read</a> can't
 --   handle positive signs in front of numbers.
@@ -4443,8 +4478,8 @@ instance GHC.Show.Show AOC2018.Load.ChallengePaths
 --   then uses a custom utility function <a>firstRepeated</a> to get the
 --   first repeated running sum.
 module AOC2018.Challenge.Day01
-day01a :: Challenge
-day01b :: Challenge
+day01a :: [Int] :~> Int
+day01b :: [Int] :~> Int
 
 
 -- | Gather together all challenges and collect them into a single map.
@@ -4452,7 +4487,7 @@ day01b :: Challenge
 module AOC2018
 
 -- | A map of all challenges.
-challengeMap :: Map (Finite 25) (Map Char Challenge)
+challengeMap :: ChallengeMap
 
 
 -- | Versions of loaders and runners meant to be used in GHCI.
@@ -4460,13 +4495,13 @@ module AOC2018.Interactive
 
 -- | Run the solution indicated by the challenge spec on the official
 --   puzzle input.
-execChallenge :: ChallengeSpec -> IO ()
+execSolution :: ChallengeSpec -> IO ()
 
 -- | Run the solution indicated by the challenge spec on a custom input.
-execChallengeWith :: ChallengeSpec -> String -> IO ()
+execSolutionWith :: ChallengeSpec -> String -> IO ()
 
 -- | Run test suite for a given challenge spec.
-testChallenge :: ChallengeSpec -> IO ()
+testSolution :: ChallengeSpec -> IO ()
 
 -- | View the prompt for a given challenge spec.
 viewPrompt :: ChallengeSpec -> IO ()
