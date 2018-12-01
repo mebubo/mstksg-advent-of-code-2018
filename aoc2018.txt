@@ -45,6 +45,9 @@ CESolve :: ChallengeError
 -- | Run a <a>Challenge</a> on some input.
 runChallenge :: Challenge -> String -> Either ChallengeError String
 
+-- | Run a <a>Challenge</a> on some input, retuning <a>Maybe</a>
+runChallenge' :: Challenge -> String -> Maybe String
+
 -- | A map of days to parts to challenges.
 type ChallengeMap = Map (Finite 25) (Map Char Challenge)
 
@@ -4365,6 +4368,9 @@ withSolver :: (String -> Maybe String) -> Challenge
 
 -- | Run a <a>Challenge</a> on some input.
 runChallenge :: Challenge -> String -> Either ChallengeError String
+
+-- | Run a <a>Challenge</a> on some input, retuning <a>Maybe</a>
+runChallenge' :: Challenge -> String -> Maybe String
 
 -- | Strict (!!)
 (!!!) :: [a] -> Int -> a
