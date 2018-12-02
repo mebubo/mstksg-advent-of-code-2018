@@ -5168,13 +5168,11 @@ module AOC2018.API
 --   requires a session key. If <tt>k</tt> is '<a>False</a>, it does not.
 data API :: Bool -> Type -> Type
 
--- | Fetch prompts
+-- | Fetch prompts, as Markdown.
 [APrompt] :: Finite 25 -> API  'False (Map Char Text)
-
--- | Fetch input
 [AInput] :: Finite 25 -> API  'True Text
 
--- | Submit answer
+-- | Submit answer.
 [ASubmit] :: Finite 25 -> Char -> String -> API  'True (Text, SubmitRes)
 
 -- | The result of a submission.
@@ -5210,6 +5208,8 @@ sessionKey :: API k a -> Maybe String -> Maybe (SessionKey k)
 --   into a <tt><a>SessionKey</a> '<a>False</a></tt> --- a
 --   <a>SessionKey</a> that may or may not contain a key.
 sessionKey_ :: Maybe String -> SessionKey  'False
+instance GHC.Classes.Ord AOC2018.API.SubmitRes
+instance GHC.Classes.Eq AOC2018.API.SubmitRes
 instance GHC.Show.Show AOC2018.API.SubmitRes
 
 
