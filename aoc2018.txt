@@ -45,6 +45,8 @@ iterateMaybe :: (a -> Maybe a) -> a -> [a]
 
 -- | Strict (!!)
 (!!!) :: [a] -> Int -> a
+
+-- | A tuple of the same item twice
 dup :: a -> (a, a)
 
 -- | <a>scanl</a> generalized to all <a>Traversable</a>.
@@ -52,7 +54,14 @@ scanlT :: Traversable t => (b -> a -> b) -> b -> t a -> t b
 
 -- | <a>scanr</a> generalized to all <a>Traversable</a>.
 scanrT :: Traversable t => (a -> b -> b) -> b -> t a -> t b
+
+-- | Convert an <a>Either</a> into a <a>Maybe</a>, or any
+--   <a>Alternative</a> instance, forgetting the error value.
 eitherToMaybe :: Alternative m => Either e a -> m a
+
+-- | Convert a <a>Maybe</a> into an <a>Either</a>, or any <a>MonadError</a>
+--   instance, by providing an error value in case <a>Nothing</a> was
+--   given.
 maybeToEither :: MonadError e m => e -> Maybe a -> m a
 
 -- | Lazily find the first repeated item.
@@ -60,6 +69,19 @@ firstRepeated :: Ord a => [a] -> Maybe a
 
 -- | Build a frequency map
 freqs :: Ord a => [a] -> Map a Int
+
+-- | Collect all possible single-item perturbations from a given perturbing
+--   function.
+--   
+--   <pre>
+--   perturbations (\i -&gt; [i - 1, i + 1]) [0,10,100]
+--   </pre>
+--   
+--   <h2>[ [-1,10,100]</h2>
+--   
+--   , [ 1,10,100] , [ 0, 9,100] , [ 0,11,100] , [ 0,10, 99] , [ 0,10,101]
+--   ]
+perturbations :: Ord a => (a -> [a]) -> [a] -> [[a]]
 
 
 -- | Types to drive the challenge runner and help speed up/clean up
@@ -4683,6 +4705,8 @@ strip :: String -> String
 
 -- | Iterate until a <a>Nothing</a> is produced
 iterateMaybe :: (a -> Maybe a) -> a -> [a]
+
+-- | A tuple of the same item twice
 dup :: a -> (a, a)
 
 -- | <a>scanl</a> generalized to all <a>Traversable</a>.
@@ -4690,7 +4714,14 @@ scanlT :: Traversable t => (b -> a -> b) -> b -> t a -> t b
 
 -- | <a>scanr</a> generalized to all <a>Traversable</a>.
 scanrT :: Traversable t => (a -> b -> b) -> b -> t a -> t b
+
+-- | Convert an <a>Either</a> into a <a>Maybe</a>, or any
+--   <a>Alternative</a> instance, forgetting the error value.
 eitherToMaybe :: Alternative m => Either e a -> m a
+
+-- | Convert a <a>Maybe</a> into an <a>Either</a>, or any <a>MonadError</a>
+--   instance, by providing an error value in case <a>Nothing</a> was
+--   given.
 maybeToEither :: MonadError e m => e -> Maybe a -> m a
 
 -- | Lazily find the first repeated item.
@@ -4698,6 +4729,19 @@ firstRepeated :: Ord a => [a] -> Maybe a
 
 -- | Build a frequency map
 freqs :: Ord a => [a] -> Map a Int
+
+-- | Collect all possible single-item perturbations from a given perturbing
+--   function.
+--   
+--   <pre>
+--   perturbations (\i -&gt; [i - 1, i + 1]) [0,10,100]
+--   </pre>
+--   
+--   <h2>[ [-1,10,100]</h2>
+--   
+--   , [ 1,10,100] , [ 0, 9,100] , [ 0,11,100] , [ 0,10, 99] , [ 0,10,101]
+--   ]
+perturbations :: Ord a => (a -> [a]) -> [a] -> [[a]]
 
 -- | Errors that might happen when running a <a>:~&gt;</a> on some input.
 data SolutionError
@@ -5167,7 +5211,19 @@ module AOC2018.Challenge.Day03
 
 -- | Day 2. See <a>AOC2018.Challenge</a> for the types used in this module!
 module AOC2018.Challenge.Day02
+
+-- | We compute a frequency map of all of the characters in a string, and
+--   then get all of the frequencies that happened for each line.
+--   
+--   Then we build a frequency map of the frequencies!
 day02a :: [String] :~> Int
+
+-- | The main work is in <a>firstNeighbor</a>, which looks thorugh a list
+--   of items and finds the first item whose neighbor was already seen.
+--   
+--   Then we take the two "almost matching" strings and filter out all of
+--   the characters that aren't the same, using <a>zipWith</a> and
+--   <a>catMaybes</a>.
 day02b :: [String] :~> String
 
 
@@ -5192,18 +5248,15 @@ mkChallengeMap :: [(Finite 25, (Char, SomeSolution))] -> ChallengeMap
 solutionList :: FilePath -> Q (TExp [(Finite 25, (Char, SomeSolution))])
 
 
--- | Day 1! Pretty straightforward Haskell pipeline. Parse using manual
---   pattern matching to strip a '+' prefix, because <a>read</a> can't
---   handle positive signs in front of numbers.
---   
---   The first one is just a simple sum.
---   
---   The second one lazily computes a running sum with <tt><a>scanl</a> (+)
---   0</tt> on the infinitely repeated list of inputs (<a>cycle</a>), and
---   then uses a custom utility function <a>firstRepeated</a> to get the
---   first repeated running sum.
+-- | Day 1! See <a>AOC2018.Challenge</a> for the types used in this module!
 module AOC2018.Challenge.Day01
+
+-- | Here we have a basic sum of numbers.
 day01a :: [Int] :~> Int
+
+-- | Here we compute a running sum on an infinitely repeated list of
+--   inputs, and then use <a>firstRepeated</a> to get the first repeated
+--   item in the list of running sums.
 day01b :: [Int] :~> Int
 
 
