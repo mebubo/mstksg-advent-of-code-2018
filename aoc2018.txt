@@ -52,8 +52,8 @@ scanlT :: Traversable t => (b -> a -> b) -> b -> t a -> t b
 
 -- | <a>scanr</a> generalized to all <a>Traversable</a>.
 scanrT :: Traversable t => (a -> b -> b) -> b -> t a -> t b
-eitherToMaybe :: Either e a -> Maybe a
-maybeToEither :: e -> Maybe a -> Either e a
+eitherToMaybe :: Alternative m => Either e a -> m a
+maybeToEither :: MonadError e m => e -> Maybe a -> m a
 
 -- | Lazily find the first repeated item.
 firstRepeated :: Ord a => [a] -> Maybe a
@@ -883,6 +883,114 @@ data Char
 data Maybe a
 Nothing :: Maybe a
 Just :: a -> Maybe a
+
+-- | The <a>Either</a> type represents values with two possibilities: a
+--   value of type <tt><a>Either</a> a b</tt> is either <tt><a>Left</a>
+--   a</tt> or <tt><a>Right</a> b</tt>.
+--   
+--   The <a>Either</a> type is sometimes used to represent a value which is
+--   either correct or an error; by convention, the <a>Left</a> constructor
+--   is used to hold an error value and the <a>Right</a> constructor is
+--   used to hold a correct value (mnemonic: "right" also means "correct").
+--   
+--   <h4><b>Examples</b></h4>
+--   
+--   The type <tt><a>Either</a> <a>String</a> <a>Int</a></tt> is the type
+--   of values which can be either a <a>String</a> or an <a>Int</a>. The
+--   <a>Left</a> constructor can be used only on <a>String</a>s, and the
+--   <a>Right</a> constructor can be used only on <a>Int</a>s:
+--   
+--   <pre>
+--   &gt;&gt;&gt; let s = Left "foo" :: Either String Int
+--   
+--   &gt;&gt;&gt; s
+--   Left "foo"
+--   
+--   &gt;&gt;&gt; let n = Right 3 :: Either String Int
+--   
+--   &gt;&gt;&gt; n
+--   Right 3
+--   
+--   &gt;&gt;&gt; :type s
+--   s :: Either String Int
+--   
+--   &gt;&gt;&gt; :type n
+--   n :: Either String Int
+--   </pre>
+--   
+--   The <a>fmap</a> from our <a>Functor</a> instance will ignore
+--   <a>Left</a> values, but will apply the supplied function to values
+--   contained in a <a>Right</a>:
+--   
+--   <pre>
+--   &gt;&gt;&gt; let s = Left "foo" :: Either String Int
+--   
+--   &gt;&gt;&gt; let n = Right 3 :: Either String Int
+--   
+--   &gt;&gt;&gt; fmap (*2) s
+--   Left "foo"
+--   
+--   &gt;&gt;&gt; fmap (*2) n
+--   Right 6
+--   </pre>
+--   
+--   The <a>Monad</a> instance for <a>Either</a> allows us to chain
+--   together multiple actions which may fail, and fail overall if any of
+--   the individual steps failed. First we'll write a function that can
+--   either parse an <a>Int</a> from a <a>Char</a>, or fail.
+--   
+--   <pre>
+--   &gt;&gt;&gt; import Data.Char ( digitToInt, isDigit )
+--   
+--   &gt;&gt;&gt; :{
+--       let parseEither :: Char -&gt; Either String Int
+--           parseEither c
+--             | isDigit c = Right (digitToInt c)
+--             | otherwise = Left "parse error"
+--   
+--   &gt;&gt;&gt; :}
+--   </pre>
+--   
+--   The following should work, since both <tt>'1'</tt> and <tt>'2'</tt>
+--   can be parsed as <a>Int</a>s.
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--       let parseMultiple :: Either String Int
+--           parseMultiple = do
+--             x &lt;- parseEither '1'
+--             y &lt;- parseEither '2'
+--             return (x + y)
+--   
+--   &gt;&gt;&gt; :}
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; parseMultiple
+--   Right 3
+--   </pre>
+--   
+--   But the following should fail overall, since the first operation where
+--   we attempt to parse <tt>'m'</tt> as an <a>Int</a> will fail:
+--   
+--   <pre>
+--   &gt;&gt;&gt; :{
+--       let parseMultiple :: Either String Int
+--           parseMultiple = do
+--             x &lt;- parseEither 'm'
+--             y &lt;- parseEither '2'
+--             return (x + y)
+--   
+--   &gt;&gt;&gt; :}
+--   </pre>
+--   
+--   <pre>
+--   &gt;&gt;&gt; parseMultiple
+--   Left "parse error"
+--   </pre>
+data Either a b
+Left :: a -> Either a b
+Right :: b -> Either a b
 
 -- | The kind of types with values. For example <tt>Int :: Type</tt>.
 type Type = Type
@@ -1779,6 +1887,31 @@ toLower :: Char -> Char
 -- | Convert a letter to the corresponding upper-case letter, if any. Any
 --   other character is returned unchanged.
 toUpper :: Char -> Char
+
+-- | Case analysis for the <a>Either</a> type. If the value is
+--   <tt><a>Left</a> a</tt>, apply the first function to <tt>a</tt>; if it
+--   is <tt><a>Right</a> b</tt>, apply the second function to <tt>b</tt>.
+--   
+--   <h4><b>Examples</b></h4>
+--   
+--   We create two values of type <tt><a>Either</a> <a>String</a>
+--   <a>Int</a></tt>, one using the <a>Left</a> constructor and another
+--   using the <a>Right</a> constructor. Then we apply "either" the
+--   <tt>length</tt> function (if we have a <a>String</a>) or the
+--   "times-two" function (if we have an <a>Int</a>):
+--   
+--   <pre>
+--   &gt;&gt;&gt; let s = Left "foo" :: Either String Int
+--   
+--   &gt;&gt;&gt; let n = Right 3 :: Either String Int
+--   
+--   &gt;&gt;&gt; either length (*2) s
+--   3
+--   
+--   &gt;&gt;&gt; either length (*2) n
+--   6
+--   </pre>
+either :: () => (a -> c) -> (b -> c) -> Either a b -> c
 
 -- | The <a>isPrefixOf</a> function takes two lists and returns <a>True</a>
 --   iff the first list is a prefix of the second.
@@ -3698,6 +3831,166 @@ isLetter :: Char -> Bool
 --   </pre>
 digitToInt :: Char -> Int
 
+-- | Return the contents of a <a>Right</a>-value or a default value
+--   otherwise.
+--   
+--   <h4><b>Examples</b></h4>
+--   
+--   Basic usage:
+--   
+--   <pre>
+--   &gt;&gt;&gt; fromRight 1 (Right 3)
+--   3
+--   
+--   &gt;&gt;&gt; fromRight 1 (Left "foo")
+--   1
+--   </pre>
+fromRight :: () => b -> Either a b -> b
+
+-- | Return the contents of a <a>Left</a>-value or a default value
+--   otherwise.
+--   
+--   <h4><b>Examples</b></h4>
+--   
+--   Basic usage:
+--   
+--   <pre>
+--   &gt;&gt;&gt; fromLeft 1 (Left 3)
+--   3
+--   
+--   &gt;&gt;&gt; fromLeft 1 (Right "foo")
+--   1
+--   </pre>
+fromLeft :: () => a -> Either a b -> a
+
+-- | Return <a>True</a> if the given value is a <a>Right</a>-value,
+--   <a>False</a> otherwise.
+--   
+--   <h4><b>Examples</b></h4>
+--   
+--   Basic usage:
+--   
+--   <pre>
+--   &gt;&gt;&gt; isRight (Left "foo")
+--   False
+--   
+--   &gt;&gt;&gt; isRight (Right 3)
+--   True
+--   </pre>
+--   
+--   Assuming a <a>Left</a> value signifies some sort of error, we can use
+--   <a>isRight</a> to write a very simple reporting function that only
+--   outputs "SUCCESS" when a computation has succeeded.
+--   
+--   This example shows how <a>isRight</a> might be used to avoid pattern
+--   matching when one does not care about the value contained in the
+--   constructor:
+--   
+--   <pre>
+--   &gt;&gt;&gt; import Control.Monad ( when )
+--   
+--   &gt;&gt;&gt; let report e = when (isRight e) $ putStrLn "SUCCESS"
+--   
+--   &gt;&gt;&gt; report (Left "parse error")
+--   
+--   &gt;&gt;&gt; report (Right 1)
+--   SUCCESS
+--   </pre>
+isRight :: () => Either a b -> Bool
+
+-- | Return <a>True</a> if the given value is a <a>Left</a>-value,
+--   <a>False</a> otherwise.
+--   
+--   <h4><b>Examples</b></h4>
+--   
+--   Basic usage:
+--   
+--   <pre>
+--   &gt;&gt;&gt; isLeft (Left "foo")
+--   True
+--   
+--   &gt;&gt;&gt; isLeft (Right 3)
+--   False
+--   </pre>
+--   
+--   Assuming a <a>Left</a> value signifies some sort of error, we can use
+--   <a>isLeft</a> to write a very simple error-reporting function that
+--   does absolutely nothing in the case of success, and outputs "ERROR" if
+--   any error occurred.
+--   
+--   This example shows how <a>isLeft</a> might be used to avoid pattern
+--   matching when one does not care about the value contained in the
+--   constructor:
+--   
+--   <pre>
+--   &gt;&gt;&gt; import Control.Monad ( when )
+--   
+--   &gt;&gt;&gt; let report e = when (isLeft e) $ putStrLn "ERROR"
+--   
+--   &gt;&gt;&gt; report (Right 1)
+--   
+--   &gt;&gt;&gt; report (Left "parse error")
+--   ERROR
+--   </pre>
+isLeft :: () => Either a b -> Bool
+
+-- | Partitions a list of <a>Either</a> into two lists. All the <a>Left</a>
+--   elements are extracted, in order, to the first component of the
+--   output. Similarly the <a>Right</a> elements are extracted to the
+--   second component of the output.
+--   
+--   <h4><b>Examples</b></h4>
+--   
+--   Basic usage:
+--   
+--   <pre>
+--   &gt;&gt;&gt; let list = [ Left "foo", Right 3, Left "bar", Right 7, Left "baz" ]
+--   
+--   &gt;&gt;&gt; partitionEithers list
+--   (["foo","bar","baz"],[3,7])
+--   </pre>
+--   
+--   The pair returned by <tt><a>partitionEithers</a> x</tt> should be the
+--   same pair as <tt>(<a>lefts</a> x, <a>rights</a> x)</tt>:
+--   
+--   <pre>
+--   &gt;&gt;&gt; let list = [ Left "foo", Right 3, Left "bar", Right 7, Left "baz" ]
+--   
+--   &gt;&gt;&gt; partitionEithers list == (lefts list, rights list)
+--   True
+--   </pre>
+partitionEithers :: () => [Either a b] -> ([a], [b])
+
+-- | Extracts from a list of <a>Either</a> all the <a>Right</a> elements.
+--   All the <a>Right</a> elements are extracted in order.
+--   
+--   <h4><b>Examples</b></h4>
+--   
+--   Basic usage:
+--   
+--   <pre>
+--   &gt;&gt;&gt; let list = [ Left "foo", Right 3, Left "bar", Right 7, Left "baz" ]
+--   
+--   &gt;&gt;&gt; rights list
+--   [3,7]
+--   </pre>
+rights :: () => [Either a b] -> [b]
+
+-- | Extracts from a list of <a>Either</a> all the <a>Left</a> elements.
+--   All the <a>Left</a> elements are extracted in order.
+--   
+--   <h4><b>Examples</b></h4>
+--   
+--   Basic usage:
+--   
+--   <pre>
+--   &gt;&gt;&gt; let list = [ Left "foo", Right 3, Left "bar", Right 7, Left "baz" ]
+--   
+--   &gt;&gt;&gt; lefts list
+--   ["foo","bar","baz"]
+--   </pre>
+lefts :: () => [Either a b] -> [a]
+
 -- | Read a string representation of a character, using Haskell
 --   source-language escape conventions, and convert it to the character
 --   that it encodes. For example:
@@ -4342,8 +4635,8 @@ scanlT :: Traversable t => (b -> a -> b) -> b -> t a -> t b
 
 -- | <a>scanr</a> generalized to all <a>Traversable</a>.
 scanrT :: Traversable t => (a -> b -> b) -> b -> t a -> t b
-eitherToMaybe :: Either e a -> Maybe a
-maybeToEither :: e -> Maybe a -> Either e a
+eitherToMaybe :: Alternative m => Either e a -> m a
+maybeToEither :: MonadError e m => e -> Maybe a -> m a
 
 -- | Lazily find the first repeated item.
 firstRepeated :: Ord a => [a] -> Maybe a
@@ -4831,39 +5124,6 @@ module AOC2018.Challenge.Day03
 module AOC2018.Challenge.Day02
 
 
--- | Loading challenge data and prompts.
-module AOC2018.Load
-
--- | A record of paths corresponding to a specific challenge.
-data ChallengePaths
-CP :: !FilePath -> !FilePath -> !FilePath -> !FilePath -> !FilePath -> !FilePath -> !FilePath -> ChallengePaths
-[_cpPromptUrl] :: ChallengePaths -> !FilePath
-[_cpDataUrl] :: ChallengePaths -> !FilePath
-[_cpSubmitUrl] :: ChallengePaths -> !FilePath
-[_cpPrompt] :: ChallengePaths -> !FilePath
-[_cpInput] :: ChallengePaths -> !FilePath
-[_cpAnswer] :: ChallengePaths -> !FilePath
-[_cpTests] :: ChallengePaths -> !FilePath
-
--- | Generate a <a>ChallengePaths</a> from a specification of a challenge.
-challengePaths :: ChallengeSpec -> ChallengePaths
-
--- | A record of data (test inputs, answers) corresponding to a specific
---   challenge.
-data ChallengeData
-CD :: !Either [String] String -> !Either [String] String -> !Maybe String -> ![(String, Maybe String)] -> ChallengeData
-[_cdPrompt] :: ChallengeData -> !Either [String] String
-[_cdInput] :: ChallengeData -> !Either [String] String
-[_cdAnswer] :: ChallengeData -> !Maybe String
-[_cdTests] :: ChallengeData -> ![(String, Maybe String)]
-
--- | Load data associated with a challenge from a given specification. Will
---   fetch answers online and cache if required (and if giten a session
---   token).
-challengeData :: Maybe String -> ChallengeSpec -> IO ChallengeData
-instance GHC.Show.Show AOC2018.Load.ChallengePaths
-
-
 -- | Template Haskell for discovering all named challenges in a given
 --   directory.
 module AOC2018.Discover
@@ -4898,6 +5158,60 @@ solutionList :: FilePath -> Q (TExp [(Finite 25, (Char, SomeSolution))])
 module AOC2018.Challenge.Day01
 day01a :: [Int] :~> Int
 day01b :: [Int] :~> Int
+
+module AOC2018.API
+data API :: Bool -> Type -> Type
+
+-- | Fetch prompts
+[APrompt] :: Finite 25 -> API  'False (Map Char Text)
+
+-- | Fetch input
+[AInput] :: Finite 25 -> API  'True Text
+
+-- | Submit answer
+[ASubmit] :: Finite 25 -> Char -> String -> API  'True (Text, SubmitRes)
+data SessionKey :: Bool -> Type
+[HasKey] :: String -> SessionKey k
+[NoKey] :: SessionKey  'False
+data SubmitRes
+SubCorrect :: SubmitRes
+SubWrong :: SubmitRes
+SubWait :: SubmitRes
+SubInvalid :: SubmitRes
+SubUnknown :: SubmitRes
+sessionKey :: API k a -> Maybe String -> Maybe (SessionKey k)
+runAPI :: SessionKey k -> API k a -> IO (Either [String] a)
+instance GHC.Show.Show AOC2018.API.SubmitRes
+
+
+-- | Loading challenge data and prompts.
+module AOC2018.Load
+
+-- | A record of paths corresponding to a specific challenge.
+data ChallengePaths
+CP :: !FilePath -> !FilePath -> !FilePath -> !FilePath -> ChallengePaths
+[_cpPrompt] :: ChallengePaths -> !FilePath
+[_cpInput] :: ChallengePaths -> !FilePath
+[_cpAnswer] :: ChallengePaths -> !FilePath
+[_cpTests] :: ChallengePaths -> !FilePath
+
+-- | Generate a <a>ChallengePaths</a> from a specification of a challenge.
+challengePaths :: ChallengeSpec -> ChallengePaths
+
+-- | A record of data (test inputs, answers) corresponding to a specific
+--   challenge.
+data ChallengeData
+CD :: !Either [String] String -> !Either [String] String -> !Maybe String -> ![(String, Maybe String)] -> ChallengeData
+[_cdPrompt] :: ChallengeData -> !Either [String] String
+[_cdInput] :: ChallengeData -> !Either [String] String
+[_cdAnswer] :: ChallengeData -> !Maybe String
+[_cdTests] :: ChallengeData -> ![(String, Maybe String)]
+
+-- | Load data associated with a challenge from a given specification. Will
+--   fetch answers online and cache if required (and if giten a session
+--   token).
+challengeData :: Maybe String -> ChallengeSpec -> IO ChallengeData
+instance GHC.Show.Show AOC2018.Load.ChallengePaths
 
 
 -- | Gather together all challenges and collect them into a single map.
