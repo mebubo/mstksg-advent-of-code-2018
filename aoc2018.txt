@@ -5159,7 +5159,13 @@ module AOC2018.Challenge.Day01
 day01a :: [Int] :~> Int
 day01b :: [Int] :~> Int
 
+
+-- | Haskell bindings for Advent of Code 2018 REST API.
 module AOC2018.API
+
+-- | An API command. An <tt><a>API</a> k a</tt> an AoC API request that
+--   returns results of type <tt>a</tt>; if <tt>k</tt> is '<a>True</a>, it
+--   requires a session key. If <tt>k</tt> is '<a>False</a>, it does not.
 data API :: Bool -> Type -> Type
 
 -- | Fetch prompts
@@ -5170,9 +5176,15 @@ data API :: Bool -> Type -> Type
 
 -- | Submit answer
 [ASubmit] :: Finite 25 -> Char -> String -> API  'True (Text, SubmitRes)
+
+-- | Holds a session key. <tt><a>SessionKey</a> '<a>True</a></tt> contains
+--   a session key for sure, but <tt><a>SessionKey</a> '<a>False</a></tt>
+--   may or may not contain one.
 data SessionKey :: Bool -> Type
 [HasKey] :: String -> SessionKey k
 [NoKey] :: SessionKey  'False
+
+-- | The result of a submission.
 data SubmitRes
 SubCorrect :: SubmitRes
 SubWrong :: SubmitRes
@@ -5180,6 +5192,12 @@ SubWait :: SubmitRes
 SubInvalid :: SubmitRes
 SubUnknown :: SubmitRes
 sessionKey :: API k a -> Maybe String -> Maybe (SessionKey k)
+
+-- | Run an <a>API</a> command with a given <a>SessionKey</a> to produce
+--   the result or a list of (lines of) errors.
+--   
+--   <b>WARNING</b>: Does not escape submission answers or limit their
+--   length, for <a>ASubmit</a>.
 runAPI :: SessionKey k -> API k a -> IO (Either [String] a)
 instance GHC.Show.Show AOC2018.API.SubmitRes
 
