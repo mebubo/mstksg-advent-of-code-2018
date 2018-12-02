@@ -5177,13 +5177,6 @@ data API :: Bool -> Type -> Type
 -- | Submit answer
 [ASubmit] :: Finite 25 -> Char -> String -> API  'True (Text, SubmitRes)
 
--- | Holds a session key. <tt><a>SessionKey</a> '<a>True</a></tt> contains
---   a session key for sure, but <tt><a>SessionKey</a> '<a>False</a></tt>
---   may or may not contain one.
-data SessionKey :: Bool -> Type
-[HasKey] :: String -> SessionKey k
-[NoKey] :: SessionKey  'False
-
 -- | The result of a submission.
 data SubmitRes
 SubCorrect :: SubmitRes
@@ -5192,6 +5185,20 @@ SubWait :: SubmitRes
 SubInvalid :: SubmitRes
 SubUnknown :: SubmitRes
 
+-- | Run an <a>API</a> command with a given <a>SessionKey</a> to produce
+--   the result or a list of (lines of) errors.
+--   
+--   <b>WARNING</b>: Does not escape submission answers or limit their
+--   length, for <a>ASubmit</a>.
+runAPI :: SessionKey k -> API k a -> IO (Either [String] a)
+
+-- | Holds a session key. <tt><a>SessionKey</a> '<a>True</a></tt> contains
+--   a session key for sure, but <tt><a>SessionKey</a> '<a>False</a></tt>
+--   may or may not contain one.
+data SessionKey :: Bool -> Type
+[HasKey] :: String -> SessionKey k
+[NoKey] :: SessionKey  'False
+
 -- | Wrap a <tt><a>Maybe</a> <a>String</a></tt> (a possible session key)
 --   into a <a>SessionKey</a> based on the expectations of a given
 --   <a>API</a> command. If the API command requires a key, <a>Nothing</a>
@@ -5199,12 +5206,10 @@ SubUnknown :: SubmitRes
 --   require a key, <a>Just</a> will always be returned.
 sessionKey :: API k a -> Maybe String -> Maybe (SessionKey k)
 
--- | Run an <a>API</a> command with a given <a>SessionKey</a> to produce
---   the result or a list of (lines of) errors.
---   
---   <b>WARNING</b>: Does not escape submission answers or limit their
---   length, for <a>ASubmit</a>.
-runAPI :: SessionKey k -> API k a -> IO (Either [String] a)
+-- | Convert a <tt><a>Maybe</a> <a>String</a></tt> (a possible session key)
+--   into a <tt><a>SessionKey</a> '<a>False</a></tt> --- a
+--   <a>SessionKey</a> that may or may not contain a key.
+sessionKey_ :: Maybe String -> SessionKey  'False
 instance GHC.Show.Show AOC2018.API.SubmitRes
 
 
