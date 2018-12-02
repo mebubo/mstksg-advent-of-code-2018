@@ -5170,6 +5170,8 @@ data API :: Bool -> Type -> Type
 
 -- | Fetch prompts, as Markdown.
 [APrompt] :: Finite 25 -> API  'False (Map Char Text)
+
+-- | Fetch input
 [AInput] :: Finite 25 -> API  'True Text
 
 -- | Submit answer.
