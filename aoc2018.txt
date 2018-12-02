@@ -58,6 +58,9 @@ maybeToEither :: MonadError e m => e -> Maybe a -> m a
 -- | Lazily find the first repeated item.
 firstRepeated :: Ord a => [a] -> Maybe a
 
+-- | Build a frequency map
+freqs :: Ord a => [a] -> Map a Int
+
 
 -- | Types to drive the challenge runner and help speed up/clean up
 --   solutions.
@@ -4439,6 +4442,58 @@ stimesIdempotentMonoid :: (Integral b, Monoid a) => b -> a -> a
 -- | A map of integers to values <tt>a</tt>.
 data IntMap a
 
+-- | The <tt>nubIntOn</tt> function behaves just like <a>nubInt</a> except
+--   it performs comparisons not on the original datatype, but a
+--   user-specified projection from that datatype.
+--   
+--   <h4>Strictness</h4>
+--   
+--   <tt>nubIntOn</tt> is strict in the values of the function applied to
+--   the elements of the list.
+nubIntOn :: () => (a -> Int) -> [a] -> [a]
+
+-- | &lt;math&gt;. The <tt>nubInt</tt> function removes duplicate
+--   <a>Int</a> values from a list. In particular, it keeps only the first
+--   occurrence of each element. By using an <a>IntSet</a> internally, it
+--   attains better asymptotics than the standard <a>nub</a> function.
+--   
+--   See also <a>nubIntOn</a>, a more widely applicable generalization.
+--   
+--   <h4>Strictness</h4>
+--   
+--   <tt>nubInt</tt> is strict in the elements of the list.
+nubInt :: [Int] -> [Int]
+
+-- | The <tt>nubOrdOn</tt> function behaves just like <a>nubOrd</a> except
+--   it performs comparisons not on the original datatype, but a
+--   user-specified projection from that datatype.
+--   
+--   <h4>Strictness</h4>
+--   
+--   <tt>nubOrdOn</tt> is strict in the values of the function applied to
+--   the elements of the list.
+nubOrdOn :: Ord b => (a -> b) -> [a] -> [a]
+
+-- | &lt;math&gt;. The <tt>nubOrd</tt> function removes duplicate elements
+--   from a list. In particular, it keeps only the first occurrence of each
+--   element. By using a <a>Set</a> internally it has better asymptotics
+--   than the standard <a>nub</a> function.
+--   
+--   <h4>Strictness</h4>
+--   
+--   <tt>nubOrd</tt> is strict in the elements of the list.
+--   
+--   <h4>Efficiency note</h4>
+--   
+--   When applicable, it is almost always better to use <a>nubInt</a> or
+--   <a>nubIntOn</a> instead of this function. For example, the best way to
+--   nub a list of characters is
+--   
+--   <pre>
+--   nubIntOn fromEnum xs
+--   </pre>
+nubOrd :: Ord a => [a] -> [a]
+
 -- | A set of integers.
 data IntSet
 
@@ -4640,6 +4695,9 @@ maybeToEither :: MonadError e m => e -> Maybe a -> m a
 
 -- | Lazily find the first repeated item.
 firstRepeated :: Ord a => [a] -> Maybe a
+
+-- | Build a frequency map
+freqs :: Ord a => [a] -> Map a Int
 
 -- | Errors that might happen when running a <a>:~&gt;</a> on some input.
 data SolutionError
@@ -5108,20 +5166,9 @@ module AOC2018.Challenge.Day03
 
 
 -- | Day 2. See <a>AOC2018.Challenge</a> for the types used in this module!
---   
---   After completing the challenge, it is recommended to:
---   
---   <ul>
---   <li>Replace <a>AOC2018.Prelude</a> imports to specific modules (with
---   explicit imports) for readability.</li>
---   <li>Remove the <tt>-Wno-unused-imports</tt> and
---   <tt>-Wno-unused-top-binds</tt> pragmas.</li>
---   <li>Replace the partial type signatures underscores in the solution
---   types <tt>_ :~&gt; _</tt> with the actual types of inputs and outputs
---   of the solution. You can delete the type signatures completely and GHC
---   will recommend what should go in place of the underscores.</li>
---   </ul>
 module AOC2018.Challenge.Day02
+day02a :: [String] :~> Int
+day02b :: [String] :~> String
 
 
 -- | Template Haskell for discovering all named challenges in a given
@@ -5170,8 +5217,6 @@ data API :: Bool -> Type -> Type
 
 -- | Fetch prompts, as Markdown.
 [APrompt] :: Finite 25 -> API  'False (Map Char Text)
-
--- | Fetch input
 [AInput] :: Finite 25 -> API  'True Text
 
 -- | Submit answer.
