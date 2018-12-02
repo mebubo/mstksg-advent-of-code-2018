@@ -145,6 +145,9 @@ data ChallengeSpec
 CS :: Finite 25 -> Char -> ChallengeSpec
 [_csDay] :: ChallengeSpec -> Finite 25
 [_csPart] :: ChallengeSpec -> Char
+
+-- | Lookup up a solution from a <a>ChallengeMap</a>
+lookupSolution :: ChallengeSpec -> ChallengeMap -> Maybe SomeSolution
 instance GHC.Generics.Generic AOC2018.Challenge.SolutionError
 instance GHC.Classes.Ord AOC2018.Challenge.SolutionError
 instance GHC.Classes.Eq AOC2018.Challenge.SolutionError
@@ -4801,6 +4804,9 @@ runSolution :: (a :~> b) -> String -> Either SolutionError String
 -- | Run a <a>SomeSolution</a> on some input.
 runSomeSolution :: SomeSolution -> String -> Either SolutionError String
 
+-- | Lookup up a solution from a <a>ChallengeMap</a>
+lookupSolution :: ChallengeSpec -> ChallengeMap -> Maybe SomeSolution
+
 
 -- | Day 25. See <a>AOC2018.Challenge</a> for the types used in this
 --   module!
@@ -5270,6 +5276,8 @@ data API :: Bool -> Type -> Type
 
 -- | Fetch prompts, as Markdown.
 [APrompt] :: Finite 25 -> API  'False (Map Char Text)
+
+-- | Fetch input
 [AInput] :: Finite 25 -> API  'True Text
 
 -- | Submit answer.
