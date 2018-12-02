@@ -5191,6 +5191,12 @@ SubWrong :: SubmitRes
 SubWait :: SubmitRes
 SubInvalid :: SubmitRes
 SubUnknown :: SubmitRes
+
+-- | Wrap a <tt><a>Maybe</a> <a>String</a></tt> (a possible session key)
+--   into a <a>SessionKey</a> based on the expectations of a given
+--   <a>API</a> command. If the API command requires a key, <a>Nothing</a>
+--   will be returned if no key is given. If the API command doesn't
+--   require a key, <a>Just</a> will always be returned.
 sessionKey :: API k a -> Maybe String -> Maybe (SessionKey k)
 
 -- | Run an <a>API</a> command with a given <a>SessionKey</a> to produce
