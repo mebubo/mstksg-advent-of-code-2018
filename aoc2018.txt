@@ -5215,24 +5215,6 @@ module AOC2018.Challenge.Day04
 module AOC2018.Challenge.Day03
 
 
--- | Day 2. See <a>AOC2018.Challenge</a> for the types used in this module!
-module AOC2018.Challenge.Day02
-
--- | We compute a frequency map of all of the characters in a string, and
---   then get all of the frequencies that happened for each line.
---   
---   Then we build a frequency map of the frequencies!
-day02a :: [String] :~> Int
-
--- | The main work is in <a>firstNeighbor</a>, which looks thorugh a list
---   of items and finds the first item whose neighbor was already seen.
---   
---   Then we take the two "almost matching" strings and filter out all of
---   the characters that aren't the same, using <a>zipWith</a> and
---   <a>catMaybes</a>.
-day02b :: [String] :~> String
-
-
 -- | Template Haskell for discovering all named challenges in a given
 --   directory.
 module AOC2018.Discover
@@ -5252,6 +5234,24 @@ mkChallengeMap :: [(Finite 25, (Char, SomeSolution))] -> ChallengeMap
 --   
 --   See <a>mkChallengeMap</a> for a description of usage.
 solutionList :: FilePath -> Q (TExp [(Finite 25, (Char, SomeSolution))])
+
+
+-- | Day 2. See <a>AOC2018.Challenge</a> for the types used in this module!
+module AOC2018.Challenge.Day02
+
+-- | We compute a frequency map of all of the characters in a string, and
+--   then get all of the frequencies that happened for each line.
+--   
+--   Then we build a frequency map of the frequencies!
+day02a :: [String] :~> Int
+
+-- | The main work is in <a>firstNeighbor</a>, which looks thorugh a list
+--   of items and finds the first item whose neighbor was already seen.
+--   
+--   Then we take the two "almost matching" strings and filter out all of
+--   the characters that aren't the same, using <a>zipWith</a> and
+--   <a>catMaybes</a>.
+day02b :: [String] :~> String
 
 
 -- | Day 1! See <a>AOC2018.Challenge</a> for the types used in this module!
