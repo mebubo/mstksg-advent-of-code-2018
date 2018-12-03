@@ -5554,8 +5554,10 @@ data API :: Bool -> Type -> Type
 
 -- | The result of a submission.
 data SubmitRes
-SubCorrect :: SubmitRes
-SubWrong :: SubmitRes
+
+-- | global rank
+SubCorrect :: Maybe Int -> SubmitRes
+SubIncorrect :: SubmitRes
 SubWait :: SubmitRes
 SubInvalid :: SubmitRes
 SubUnknown :: SubmitRes
@@ -5588,6 +5590,10 @@ sessionKey :: API k a -> Maybe String -> Maybe (SessionKey k)
 --   into a <tt><a>SessionKey</a> '<a>False</a></tt> --- a
 --   <a>SessionKey</a> that may or may not contain a key.
 sessionKey_ :: Maybe String -> SessionKey  'False
+
+-- | Parse a (markdown or plain text) submission response into a
+--   <a>SubmitRes</a>.
+parseSubmitRes :: Text -> SubmitRes
 instance GHC.Classes.Ord AOC2018.API.SubmitRes
 instance GHC.Classes.Eq AOC2018.API.SubmitRes
 instance GHC.Show.Show AOC2018.API.SubmitRes
@@ -5654,13 +5660,13 @@ MRO :: !TestSpec -> !Bool -> !Bool -> !Bool -> !Map (Finite 25) (Map Char String
 
 -- | Manually supply input. (Default: <a>empty</a>)
 [_mroInput] :: MainRunOpts -> !Map (Finite 25) (Map Char String)
-class HasMainRunOpts c_a1pAV
-mainRunOpts :: HasMainRunOpts c_a1pAV => Lens' c_a1pAV MainRunOpts
-mroBench :: HasMainRunOpts c_a1pAV => Lens' c_a1pAV Bool
-mroInput :: HasMainRunOpts c_a1pAV => Lens' c_a1pAV (Map (Finite 25) (Map Char String))
-mroLock :: HasMainRunOpts c_a1pAV => Lens' c_a1pAV Bool
-mroSpec :: HasMainRunOpts c_a1pAV => Lens' c_a1pAV TestSpec
-mroTest :: HasMainRunOpts c_a1pAV => Lens' c_a1pAV Bool
+class HasMainRunOpts c_a1qb3
+mainRunOpts :: HasMainRunOpts c_a1qb3 => Lens' c_a1qb3 MainRunOpts
+mroBench :: HasMainRunOpts c_a1qb3 => Lens' c_a1qb3 Bool
+mroInput :: HasMainRunOpts c_a1qb3 => Lens' c_a1qb3 (Map (Finite 25) (Map Char String))
+mroLock :: HasMainRunOpts c_a1qb3 => Lens' c_a1qb3 Bool
+mroSpec :: HasMainRunOpts c_a1qb3 => Lens' c_a1qb3 TestSpec
+mroTest :: HasMainRunOpts c_a1qb3 => Lens' c_a1qb3 Bool
 
 -- | Run, test, bench.
 mainRun :: (MonadIO m, MonadError [String] m) => Config -> MainRunOpts -> m (Map (Finite 25) (Map Char (Maybe Bool, Either [String] String)))
@@ -5672,9 +5678,9 @@ defaultMRO :: TestSpec -> MainRunOpts
 newtype MainViewOpts
 MVO :: TestSpec -> MainViewOpts
 [_mvoSpec] :: MainViewOpts -> TestSpec
-class HasMainViewOpts c_a1pHb
-mainViewOpts :: HasMainViewOpts c_a1pHb => Lens' c_a1pHb MainViewOpts
-mvoSpec :: HasMainViewOpts c_a1pHb => Lens' c_a1pHb TestSpec
+class HasMainViewOpts c_a1qhj
+mainViewOpts :: HasMainViewOpts c_a1qhj => Lens' c_a1qhj MainViewOpts
+mvoSpec :: HasMainViewOpts c_a1qhj => Lens' c_a1qhj TestSpec
 
 -- | View prompt
 mainView :: (MonadIO m, MonadError [String] m) => Config -> MainViewOpts -> m (Map (Finite 25) (Map Char Text))
@@ -5692,12 +5698,12 @@ MSO :: !ChallengeSpec -> !Bool -> !Bool -> !Bool -> MainSubmitOpts
 
 -- | Lock answer if submission succeeded? (Default: True)
 [_msoLock] :: MainSubmitOpts -> !Bool
-class HasMainSubmitOpts c_a1pNa
-mainSubmitOpts :: HasMainSubmitOpts c_a1pNa => Lens' c_a1pNa MainSubmitOpts
-msoForce :: HasMainSubmitOpts c_a1pNa => Lens' c_a1pNa Bool
-msoLock :: HasMainSubmitOpts c_a1pNa => Lens' c_a1pNa Bool
-msoSpec :: HasMainSubmitOpts c_a1pNa => Lens' c_a1pNa ChallengeSpec
-msoTest :: HasMainSubmitOpts c_a1pNa => Lens' c_a1pNa Bool
+class HasMainSubmitOpts c_a1qni
+mainSubmitOpts :: HasMainSubmitOpts c_a1qni => Lens' c_a1qni MainSubmitOpts
+msoForce :: HasMainSubmitOpts c_a1qni => Lens' c_a1qni Bool
+msoLock :: HasMainSubmitOpts c_a1qni => Lens' c_a1qni Bool
+msoSpec :: HasMainSubmitOpts c_a1qni => Lens' c_a1qni ChallengeSpec
+msoTest :: HasMainSubmitOpts c_a1qni => Lens' c_a1qni Bool
 
 -- | Submit and analyze result
 mainSubmit :: (MonadIO m, MonadError [String] m) => Config -> MainSubmitOpts -> m (Text, SubmitRes)
@@ -5738,6 +5744,21 @@ viewPrompt :: ChallengeSpec -> IO Text
 
 -- | Submit solution for a given challenge spec, and lock if correct.
 submitSolution :: ChallengeSpec -> IO (Text, SubmitRes)
+
+-- | Result-suppressing version of <a>execSolution</a>.
+execSolution_ :: ChallengeSpec -> IO ()
+
+-- | Result-suppressing version of <a>execSolutionWith</a>.
+execSolutionWith_ :: ChallengeSpec -> String -> IO ()
+
+-- | Result-suppressing version of <a>testSolution</a>.
+testSolution_ :: ChallengeSpec -> IO ()
+
+-- | Result-suppressing version of <a>viewPrompt</a>.
+viewPrompt_ :: ChallengeSpec -> IO ()
+
+-- | Result-suppressing version of <a>submitSolution</a>.
+submitSolution_ :: ChallengeSpec -> IO ()
 
 -- | Load input for a given challenge
 loadInput :: ChallengeSpec -> IO String
