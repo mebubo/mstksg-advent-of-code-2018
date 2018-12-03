@@ -5466,8 +5466,19 @@ module AOC2018.Challenge.Day04
 
 -- | Day 3. See <a>AOC2018.Solver</a> for the types used in this module!
 module AOC2018.Challenge.Day03
-day03a :: [(Int, Rect)] :~> Int
-day03b :: _ :~> Int
+
+-- | Lends itself pretty well to a functional approach.
+--   
+--   <ol>
+--   <li>Lay the tiles.</li>
+--   <li>Get all the frequencies at each time</li>
+--   <li>Filter for the frequencies greater than 2</li>
+--   <li>Count them</li>
+--   </ol>
+day03a :: [Rect] :~> Int
+
+-- | Once we lay our tiles, we find the first claim that has no overlaps.
+day03b :: [(Int, Rect)] :~> Int
 
 
 -- | Day 2. See <a>AOC2018.Solver</a> for the types used in this module!
