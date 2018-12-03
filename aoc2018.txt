@@ -14,7 +14,7 @@
 
 
 -- | Utilities for loading configuration file.
-module AOC2018.Config
+module AOC2018.Run.Config
 
 -- | Configuration for auto-runner.
 newtype Config
@@ -29,9 +29,9 @@ defConfPath :: FilePath
 
 -- | Load a session token from the configuration file at a given filepath.
 session :: FilePath -> IO (Maybe String)
-instance GHC.Generics.Generic AOC2018.Config.Config
-instance Data.Aeson.Types.ToJSON.ToJSON AOC2018.Config.Config
-instance Data.Aeson.Types.FromJSON.FromJSON AOC2018.Config.Config
+instance GHC.Generics.Generic AOC2018.Run.Config.Config
+instance Data.Aeson.Types.ToJSON.ToJSON AOC2018.Run.Config.Config
+instance Data.Aeson.Types.FromJSON.FromJSON AOC2018.Run.Config.Config
 
 
 -- | Assorted utility functions and orphans used for solutions.
@@ -175,6 +175,7 @@ data ChallengeSpec
 CS :: Finite 25 -> Char -> ChallengeSpec
 [_csDay] :: ChallengeSpec -> Finite 25
 [_csPart] :: ChallengeSpec -> Char
+instance GHC.Show.Show AOC2018.Discover.ChallengeSpec
 
 
 -- | Custom Prelude while developing challenges. Ideally, once challenges
@@ -5591,7 +5592,7 @@ instance GHC.Show.Show AOC2018.API.SubmitRes
 
 
 -- | Loading challenge data and prompts.
-module AOC2018.Load
+module AOC2018.Run.Load
 
 -- | A record of paths corresponding to a specific challenge.
 data ChallengePaths
@@ -5618,7 +5619,7 @@ CD :: !Either [String] String -> !Either [String] String -> !Maybe String -> ![(
 --   fetch answers online and cache if required (and if giten a session
 --   token).
 challengeData :: Maybe String -> ChallengeSpec -> IO ChallengeData
-instance GHC.Show.Show AOC2018.Load.ChallengePaths
+instance GHC.Show.Show AOC2018.Run.Load.ChallengePaths
 
 
 -- | Run actions regarding challenges, solutions, tests, submissions,
@@ -5630,51 +5631,55 @@ data TestSpec
 TSAll :: TestSpec
 TSDayAll :: Finite 25 -> TestSpec
 [_tsDay] :: TestSpec -> Finite 25
-TSDayPart :: Finite 25 -> Char -> TestSpec
-[_tsDay] :: TestSpec -> Finite 25
-[_tsPart] :: TestSpec -> Char
+TSDayPart :: ChallengeSpec -> TestSpec
+[_tsSpec] :: TestSpec -> ChallengeSpec
 data MainRunOpts
-MRO :: TestSpec -> Bool -> Bool -> Bool -> MainRunOpts
-[_mroSpec] :: MainRunOpts -> TestSpec
-[_mroTest] :: MainRunOpts -> Bool
-[_mroBench] :: MainRunOpts -> Bool
-[_mroLock] :: MainRunOpts -> Bool
-class HasMainRunOpts c_a1pbC
-mainRunOpts :: HasMainRunOpts c_a1pbC => Lens' c_a1pbC MainRunOpts
-mroBench :: HasMainRunOpts c_a1pbC => Lens' c_a1pbC Bool
-mroLock :: HasMainRunOpts c_a1pbC => Lens' c_a1pbC Bool
-mroSpec :: HasMainRunOpts c_a1pbC => Lens' c_a1pbC TestSpec
-mroTest :: HasMainRunOpts c_a1pbC => Lens' c_a1pbC Bool
+MRO :: !TestSpec -> !Bool -> !Bool -> !Bool -> MainRunOpts
+[_mroSpec] :: MainRunOpts -> !TestSpec
+[_mroTest] :: MainRunOpts -> !Bool
+[_mroBench] :: MainRunOpts -> !Bool
+[_mroLock] :: MainRunOpts -> !Bool
+class HasMainRunOpts c_a1pnM
+mainRunOpts :: HasMainRunOpts c_a1pnM => Lens' c_a1pnM MainRunOpts
+mroBench :: HasMainRunOpts c_a1pnM => Lens' c_a1pnM Bool
+mroLock :: HasMainRunOpts c_a1pnM => Lens' c_a1pnM Bool
+mroSpec :: HasMainRunOpts c_a1pnM => Lens' c_a1pnM TestSpec
+mroTest :: HasMainRunOpts c_a1pnM => Lens' c_a1pnM Bool
 mainRun :: (MonadIO m, MonadError [String] m) => Config -> MainRunOpts -> m ()
+defaultMRO :: TestSpec -> MainRunOpts
 newtype MainViewOpts
 MVO :: ChallengeSpec -> MainViewOpts
 [_mvoSpec] :: MainViewOpts -> ChallengeSpec
-class HasMainViewOpts c_a1pgg
-mainViewOpts :: HasMainViewOpts c_a1pgg => Lens' c_a1pgg MainViewOpts
-mvoSpec :: HasMainViewOpts c_a1pgg => Lens' c_a1pgg ChallengeSpec
+class HasMainViewOpts c_a1pt6
+mainViewOpts :: HasMainViewOpts c_a1pt6 => Lens' c_a1pt6 MainViewOpts
+mvoSpec :: HasMainViewOpts c_a1pt6 => Lens' c_a1pt6 ChallengeSpec
 mainView :: (MonadIO m, MonadError [String] m) => Config -> MainViewOpts -> m ()
 data MainSubmitOpts
-MSO :: ChallengeSpec -> Bool -> Bool -> Bool -> MainSubmitOpts
-[_msoSpec] :: MainSubmitOpts -> ChallengeSpec
-[_msoTest] :: MainSubmitOpts -> Bool
-[_msoForce] :: MainSubmitOpts -> Bool
-[_msoLock] :: MainSubmitOpts -> Bool
-class HasMainSubmitOpts c_a1pkS
-mainSubmitOpts :: HasMainSubmitOpts c_a1pkS => Lens' c_a1pkS MainSubmitOpts
-msoForce :: HasMainSubmitOpts c_a1pkS => Lens' c_a1pkS Bool
-msoLock :: HasMainSubmitOpts c_a1pkS => Lens' c_a1pkS Bool
-msoSpec :: HasMainSubmitOpts c_a1pkS => Lens' c_a1pkS ChallengeSpec
-msoTest :: HasMainSubmitOpts c_a1pkS => Lens' c_a1pkS Bool
+MSO :: !ChallengeSpec -> !Bool -> !Bool -> !Bool -> MainSubmitOpts
+[_msoSpec] :: MainSubmitOpts -> !ChallengeSpec
+[_msoTest] :: MainSubmitOpts -> !Bool
+[_msoForce] :: MainSubmitOpts -> !Bool
+[_msoLock] :: MainSubmitOpts -> !Bool
+class HasMainSubmitOpts c_a1pz5
+mainSubmitOpts :: HasMainSubmitOpts c_a1pz5 => Lens' c_a1pz5 MainSubmitOpts
+msoForce :: HasMainSubmitOpts c_a1pz5 => Lens' c_a1pz5 Bool
+msoLock :: HasMainSubmitOpts c_a1pz5 => Lens' c_a1pz5 Bool
+msoSpec :: HasMainSubmitOpts c_a1pz5 => Lens' c_a1pz5 ChallengeSpec
+msoTest :: HasMainSubmitOpts c_a1pz5 => Lens' c_a1pz5 Bool
 mainSubmit :: (MonadIO m, MonadError [String] m) => Config -> MainSubmitOpts -> m ()
+defaultMSO :: ChallengeSpec -> MainSubmitOpts
 withColor :: ColorIntensity -> Color -> IO () -> IO ()
 instance AOC2018.Run.HasMainSubmitOpts AOC2018.Run.MainSubmitOpts
+instance GHC.Show.Show AOC2018.Run.MainSubmitOpts
 instance AOC2018.Run.HasMainViewOpts AOC2018.Run.MainViewOpts
+instance GHC.Show.Show AOC2018.Run.MainViewOpts
 instance AOC2018.Run.HasMainRunOpts AOC2018.Run.MainRunOpts
+instance GHC.Show.Show AOC2018.Run.MainRunOpts
 instance GHC.Show.Show AOC2018.Run.TestSpec
 
 
 -- | Versions of loaders and runners meant to be used in GHCI.
-module AOC2018.Interactive
+module AOC2018.Run.Interactive
 
 -- | Run the solution indicated by the challenge spec on the official
 --   puzzle input.
@@ -5688,6 +5693,9 @@ testSolution :: ChallengeSpec -> IO ()
 
 -- | View the prompt for a given challenge spec.
 viewPrompt :: ChallengeSpec -> IO ()
+
+-- | Submit solution for a given challenge spec, and lock if correct.
+submitSolution :: ChallengeSpec -> IO ()
 
 -- | Unsafely create a <a>ChallengeSpec</a> from a day number and part.
 --   
