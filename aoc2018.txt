@@ -135,19 +135,6 @@ runSolution :: (a :~> b) -> String -> Either SolutionError String
 
 -- | Run a <a>SomeSolution</a> on some input.
 runSomeSolution :: SomeSolution -> String -> Either SolutionError String
-
--- | A map of days to parts to solutions.
-type ChallengeMap = Map (Finite 25) (Map Char SomeSolution)
-
--- | A specification for a specific challenge. Should consist of a day and
---   a lowercase character.
-data ChallengeSpec
-CS :: Finite 25 -> Char -> ChallengeSpec
-[_csDay] :: ChallengeSpec -> Finite 25
-[_csPart] :: ChallengeSpec -> Char
-
--- | Lookup up a solution from a <a>ChallengeMap</a>
-lookupSolution :: ChallengeSpec -> ChallengeMap -> Maybe SomeSolution
 instance GHC.Generics.Generic AOC2018.Solver.SolutionError
 instance GHC.Classes.Ord AOC2018.Solver.SolutionError
 instance GHC.Classes.Eq AOC2018.Solver.SolutionError
@@ -174,6 +161,16 @@ mkChallengeMap :: [(Finite 25, (Char, SomeSolution))] -> ChallengeMap
 --   
 --   See <a>mkChallengeMap</a> for a description of usage.
 solutionList :: FilePath -> Q (TExp [(Finite 25, (Char, SomeSolution))])
+
+-- | A map of days to parts to solutions.
+type ChallengeMap = Map (Finite 25) (Map Char SomeSolution)
+
+-- | A specification for a specific challenge. Should consist of a day and
+--   a lowercase character.
+data ChallengeSpec
+CS :: Finite 25 -> Char -> ChallengeSpec
+[_csDay] :: ChallengeSpec -> Finite 25
+[_csPart] :: ChallengeSpec -> Char
 
 
 -- | Custom Prelude while developing challenges. Ideally, once challenges
@@ -5041,9 +5038,6 @@ data SolutionError
 SEParse :: SolutionError
 SESolve :: SolutionError
 
--- | A map of days to parts to solutions.
-type ChallengeMap = Map (Finite 25) (Map Char SomeSolution)
-
 -- | Wrap an <tt>a <a>:~&gt;</a> b</tt> and hide the type variables so we
 --   can put different solutions in a container.
 data SomeSolution
@@ -5072,13 +5066,6 @@ MkSol :: (String -> Maybe a) -> (a -> Maybe b) -> (b -> String) -> (:~>) a b
 -- | print out the <tt>b</tt> solution in a pretty way
 [sShow] :: (:~>) a b -> b -> String
 
--- | A specification for a specific challenge. Should consist of a day and
---   a lowercase character.
-data ChallengeSpec
-CS :: Finite 25 -> Char -> ChallengeSpec
-[_csDay] :: ChallengeSpec -> Finite 25
-[_csPart] :: ChallengeSpec -> Char
-
 -- | Construct a <a>:~&gt;</a> from just a normal <tt>String -&gt;
 --   String</tt> solver. Does no parsing or special printing treatment.
 withSolver' :: (String -> String) -> String :~> String
@@ -5093,9 +5080,6 @@ runSolution :: (a :~> b) -> String -> Either SolutionError String
 
 -- | Run a <a>SomeSolution</a> on some input.
 runSomeSolution :: SomeSolution -> String -> Either SolutionError String
-
--- | Lookup up a solution from a <a>ChallengeMap</a>
-lookupSolution :: ChallengeSpec -> ChallengeMap -> Maybe SomeSolution
 
 
 -- | Day 25. See <a>AOC2018.Solver</a> for the types used in this module!
@@ -5519,6 +5503,26 @@ day01a :: [Int] :~> Int
 day01b :: [Int] :~> Int
 
 
+-- | Gather together all challenges and collect them into a single map.
+module AOC2018.Challenge
+
+-- | A map of days to parts to solutions.
+type ChallengeMap = Map (Finite 25) (Map Char SomeSolution)
+
+-- | A specification for a specific challenge. Should consist of a day and
+--   a lowercase character.
+data ChallengeSpec
+CS :: Finite 25 -> Char -> ChallengeSpec
+[_csDay] :: ChallengeSpec -> Finite 25
+[_csPart] :: ChallengeSpec -> Char
+
+-- | A map of all challenges.
+challengeMap :: ChallengeMap
+
+-- | Lookup up a solution from a <a>ChallengeMap</a>
+lookupSolution :: ChallengeSpec -> ChallengeMap -> Maybe SomeSolution
+
+
 -- | Haskell bindings for Advent of Code 2018 REST API.
 module AOC2018.API
 
@@ -5604,14 +5608,6 @@ challengeData :: Maybe String -> ChallengeSpec -> IO ChallengeData
 instance GHC.Show.Show AOC2018.Load.ChallengePaths
 
 
--- | Gather together all challenges and collect them into a single map.
---   Also re-exports general utilities used by the auto-runner executable.
-module AOC2018
-
--- | A map of all challenges.
-challengeMap :: ChallengeMap
-
-
 -- | Versions of loaders and runners meant to be used in GHCI.
 module AOC2018.Interactive
 
@@ -5627,3 +5623,8 @@ testSolution :: ChallengeSpec -> IO ()
 
 -- | View the prompt for a given challenge spec.
 viewPrompt :: ChallengeSpec -> IO ()
+
+
+-- | Single-stop entry point for the library's functionality and all
+--   challenge solutions.
+module AOC2018
