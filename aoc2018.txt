@@ -175,6 +175,8 @@ data ChallengeSpec
 CS :: Finite 25 -> Char -> ChallengeSpec
 [_csDay] :: ChallengeSpec -> Finite 25
 [_csPart] :: ChallengeSpec -> Char
+instance GHC.Classes.Ord AOC2018.Discover.ChallengeSpec
+instance GHC.Classes.Eq AOC2018.Discover.ChallengeSpec
 instance GHC.Show.Show AOC2018.Discover.ChallengeSpec
 
 
@@ -5529,7 +5531,7 @@ CS :: Finite 25 -> Char -> ChallengeSpec
 challengeMap :: ChallengeMap
 
 -- | Lookup up a solution from a <a>ChallengeMap</a>
-lookupSolution :: ChallengeSpec -> ChallengeMap -> Maybe SomeSolution
+lookupSolution :: ChallengeSpec -> Map (Finite 25) (Map Char a) -> Maybe a
 showDay :: Finite n -> String
 
 
@@ -5609,8 +5611,8 @@ challengePaths :: ChallengeSpec -> ChallengePaths
 -- | A record of data (test inputs, answers) corresponding to a specific
 --   challenge.
 data ChallengeData
-CD :: !Either [String] String -> !Either [String] String -> !Maybe String -> ![(String, Maybe String)] -> ChallengeData
-[_cdPrompt] :: ChallengeData -> !Either [String] String
+CD :: !Either [String] Text -> !Either [String] String -> !Maybe String -> ![(String, Maybe String)] -> ChallengeData
+[_cdPrompt] :: ChallengeData -> !Either [String] Text
 [_cdInput] :: ChallengeData -> !Either [String] String
 [_cdAnswer] :: ChallengeData -> !Maybe String
 [_cdTests] :: ChallengeData -> ![(String, Maybe String)]
@@ -5652,30 +5654,30 @@ MRO :: !TestSpec -> !Bool -> !Bool -> !Bool -> !Map (Finite 25) (Map Char String
 
 -- | Manually supply input. (Default: <a>empty</a>)
 [_mroInput] :: MainRunOpts -> !Map (Finite 25) (Map Char String)
-class HasMainRunOpts c_a1pnh
-mainRunOpts :: HasMainRunOpts c_a1pnh => Lens' c_a1pnh MainRunOpts
-mroBench :: HasMainRunOpts c_a1pnh => Lens' c_a1pnh Bool
-mroInput :: HasMainRunOpts c_a1pnh => Lens' c_a1pnh (Map (Finite 25) (Map Char String))
-mroLock :: HasMainRunOpts c_a1pnh => Lens' c_a1pnh Bool
-mroSpec :: HasMainRunOpts c_a1pnh => Lens' c_a1pnh TestSpec
-mroTest :: HasMainRunOpts c_a1pnh => Lens' c_a1pnh Bool
+class HasMainRunOpts c_a1pAV
+mainRunOpts :: HasMainRunOpts c_a1pAV => Lens' c_a1pAV MainRunOpts
+mroBench :: HasMainRunOpts c_a1pAV => Lens' c_a1pAV Bool
+mroInput :: HasMainRunOpts c_a1pAV => Lens' c_a1pAV (Map (Finite 25) (Map Char String))
+mroLock :: HasMainRunOpts c_a1pAV => Lens' c_a1pAV Bool
+mroSpec :: HasMainRunOpts c_a1pAV => Lens' c_a1pAV TestSpec
+mroTest :: HasMainRunOpts c_a1pAV => Lens' c_a1pAV Bool
 
 -- | Run, test, bench.
-mainRun :: (MonadIO m, MonadError [String] m) => Config -> MainRunOpts -> m ()
+mainRun :: (MonadIO m, MonadError [String] m) => Config -> MainRunOpts -> m (Map (Finite 25) (Map Char (Maybe Bool, Either [String] String)))
 
 -- | Default options for <a>mainRun</a>.
 defaultMRO :: TestSpec -> MainRunOpts
 
 -- | Options for <a>mainView</a>.
 newtype MainViewOpts
-MVO :: ChallengeSpec -> MainViewOpts
-[_mvoSpec] :: MainViewOpts -> ChallengeSpec
-class HasMainViewOpts c_a1ptx
-mainViewOpts :: HasMainViewOpts c_a1ptx => Lens' c_a1ptx MainViewOpts
-mvoSpec :: HasMainViewOpts c_a1ptx => Lens' c_a1ptx ChallengeSpec
+MVO :: TestSpec -> MainViewOpts
+[_mvoSpec] :: MainViewOpts -> TestSpec
+class HasMainViewOpts c_a1pHb
+mainViewOpts :: HasMainViewOpts c_a1pHb => Lens' c_a1pHb MainViewOpts
+mvoSpec :: HasMainViewOpts c_a1pHb => Lens' c_a1pHb TestSpec
 
 -- | View prompt
-mainView :: (MonadIO m, MonadError [String] m) => Config -> MainViewOpts -> m ()
+mainView :: (MonadIO m, MonadError [String] m) => Config -> MainViewOpts -> m (Map (Finite 25) (Map Char Text))
 
 -- | Options for <a>mainSubmit</a>
 data MainSubmitOpts
@@ -5690,12 +5692,12 @@ MSO :: !ChallengeSpec -> !Bool -> !Bool -> !Bool -> MainSubmitOpts
 
 -- | Lock answer if submission succeeded? (Default: True)
 [_msoLock] :: MainSubmitOpts -> !Bool
-class HasMainSubmitOpts c_a1pzw
-mainSubmitOpts :: HasMainSubmitOpts c_a1pzw => Lens' c_a1pzw MainSubmitOpts
-msoForce :: HasMainSubmitOpts c_a1pzw => Lens' c_a1pzw Bool
-msoLock :: HasMainSubmitOpts c_a1pzw => Lens' c_a1pzw Bool
-msoSpec :: HasMainSubmitOpts c_a1pzw => Lens' c_a1pzw ChallengeSpec
-msoTest :: HasMainSubmitOpts c_a1pzw => Lens' c_a1pzw Bool
+class HasMainSubmitOpts c_a1pNa
+mainSubmitOpts :: HasMainSubmitOpts c_a1pNa => Lens' c_a1pNa MainSubmitOpts
+msoForce :: HasMainSubmitOpts c_a1pNa => Lens' c_a1pNa Bool
+msoLock :: HasMainSubmitOpts c_a1pNa => Lens' c_a1pNa Bool
+msoSpec :: HasMainSubmitOpts c_a1pNa => Lens' c_a1pNa ChallengeSpec
+msoTest :: HasMainSubmitOpts c_a1pNa => Lens' c_a1pNa Bool
 
 -- | Submit and analyze result
 mainSubmit :: (MonadIO m, MonadError [String] m) => Config -> MainSubmitOpts -> m (Text, SubmitRes)
@@ -5718,23 +5720,27 @@ instance GHC.Show.Show AOC2018.Run.TestSpec
 module AOC2018.Run.Interactive
 
 -- | Run the solution indicated by the challenge spec on the official
---   puzzle input.
-execSolution :: ChallengeSpec -> IO ()
+--   puzzle input. Get answer as result.
+execSolution :: ChallengeSpec -> IO String
 
 -- | Run the solution indicated by the challenge spec on a custom input.
-execSolutionWith :: ChallengeSpec -> String -> IO ()
+--   Get answer as result.
+execSolutionWith :: ChallengeSpec -> String -> IO String
 
 -- | Run test suite for a given challenge spec.
-testSolution :: ChallengeSpec -> IO ()
+--   
+--   Returns <a>Just</a> if any tests were run, with a <a>Bool</a>
+--   specifying whether or not all tests passed.
+testSolution :: ChallengeSpec -> IO (Maybe Bool)
 
 -- | View the prompt for a given challenge spec.
-viewPrompt :: ChallengeSpec -> IO ()
+viewPrompt :: ChallengeSpec -> IO Text
 
 -- | Submit solution for a given challenge spec, and lock if correct.
-submitSolution :: ChallengeSpec -> IO (Either [String] (Text, SubmitRes))
+submitSolution :: ChallengeSpec -> IO (Text, SubmitRes)
 
 -- | Load input for a given challenge
-loadInput :: ChallengeSpec -> IO (Either [String] String)
+loadInput :: ChallengeSpec -> IO String
 
 -- | Load test cases for a given challenge
 loadTests :: ChallengeSpec -> IO [(String, Maybe String)]
