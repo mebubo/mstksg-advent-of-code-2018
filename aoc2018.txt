@@ -5532,7 +5532,9 @@ challengeMap :: ChallengeMap
 
 -- | Lookup up a solution from a <a>ChallengeMap</a>
 lookupSolution :: ChallengeSpec -> Map (Finite 25) (Map Char a) -> Maybe a
-showDay :: Finite n -> String
+
+-- | Show a day represented by a 'Finite 25'.
+showDay :: Finite 25 -> String
 
 
 -- | Haskell bindings for Advent of Code 2018 REST API.
