@@ -83,6 +83,10 @@ freqs :: Ord a => [a] -> Map a Int
 --   ]
 perturbations :: (a -> [a]) -> [a] -> [[a]]
 
+-- | Like <a>find</a>, but instead of taking an <tt>a -&gt; Bool</tt>,
+--   takes an <tt>a -&gt; Maybe b</tt> and returns the first success.
+findMaybe :: Foldable t => (a -> Maybe b) -> t a -> Maybe b
+
 
 -- | Types to drive the challenge runner and help speed up/clean up
 --   solutions.
@@ -5032,6 +5036,10 @@ freqs :: Ord a => [a] -> Map a Int
 --   , [ 1,10,100] , [ 0, 9,100] , [ 0,11,100] , [ 0,10, 99] , [ 0,10,101]
 --   ]
 perturbations :: (a -> [a]) -> [a] -> [[a]]
+
+-- | Like <a>find</a>, but instead of taking an <tt>a -&gt; Bool</tt>,
+--   takes an <tt>a -&gt; Maybe b</tt> and returns the first success.
+findMaybe :: Foldable t => (a -> Maybe b) -> t a -> Maybe b
 
 -- | Errors that might happen when running a <a>:~&gt;</a> on some input.
 data SolutionError
