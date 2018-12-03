@@ -5627,17 +5627,27 @@ instance GHC.Show.Show AOC2018.Run.Load.ChallengePaths
 --   
 --   Essentially implements the functionality of the main app.
 module AOC2018.Run
+
+-- | Specification of parts to test and run
 data TestSpec
 TSAll :: TestSpec
 TSDayAll :: Finite 25 -> TestSpec
 [_tsDay] :: TestSpec -> Finite 25
 TSDayPart :: ChallengeSpec -> TestSpec
 [_tsSpec] :: TestSpec -> ChallengeSpec
+
+-- | Options for <a>mainRun</a>.
 data MainRunOpts
 MRO :: !TestSpec -> !Bool -> !Bool -> !Bool -> MainRunOpts
 [_mroSpec] :: MainRunOpts -> !TestSpec
+
+-- | Run tests? (Default: False)
 [_mroTest] :: MainRunOpts -> !Bool
+
+-- | Benchmark? (Default: False)
 [_mroBench] :: MainRunOpts -> !Bool
+
+-- | Lock in answer as correct? (Default: False)
 [_mroLock] :: MainRunOpts -> !Bool
 class HasMainRunOpts c_a1pnM
 mainRunOpts :: HasMainRunOpts c_a1pnM => Lens' c_a1pnM MainRunOpts
@@ -5645,20 +5655,36 @@ mroBench :: HasMainRunOpts c_a1pnM => Lens' c_a1pnM Bool
 mroLock :: HasMainRunOpts c_a1pnM => Lens' c_a1pnM Bool
 mroSpec :: HasMainRunOpts c_a1pnM => Lens' c_a1pnM TestSpec
 mroTest :: HasMainRunOpts c_a1pnM => Lens' c_a1pnM Bool
+
+-- | Run, test, bench.
 mainRun :: (MonadIO m, MonadError [String] m) => Config -> MainRunOpts -> m ()
+
+-- | Default options for <a>mainRun</a>.
 defaultMRO :: TestSpec -> MainRunOpts
+
+-- | Options for <a>mainView</a>.
 newtype MainViewOpts
 MVO :: ChallengeSpec -> MainViewOpts
 [_mvoSpec] :: MainViewOpts -> ChallengeSpec
 class HasMainViewOpts c_a1pt6
 mainViewOpts :: HasMainViewOpts c_a1pt6 => Lens' c_a1pt6 MainViewOpts
 mvoSpec :: HasMainViewOpts c_a1pt6 => Lens' c_a1pt6 ChallengeSpec
+
+-- | View prompt
 mainView :: (MonadIO m, MonadError [String] m) => Config -> MainViewOpts -> m ()
+
+-- | Options for <a>mainSubmit</a>
 data MainSubmitOpts
 MSO :: !ChallengeSpec -> !Bool -> !Bool -> !Bool -> MainSubmitOpts
 [_msoSpec] :: MainSubmitOpts -> !ChallengeSpec
+
+-- | Run tests before submitting? (Default: True)
 [_msoTest] :: MainSubmitOpts -> !Bool
+
+-- | Force submission even if bad? (Default: False)
 [_msoForce] :: MainSubmitOpts -> !Bool
+
+-- | Lock answer if submission succeeded? (Default: True)
 [_msoLock] :: MainSubmitOpts -> !Bool
 class HasMainSubmitOpts c_a1pz5
 mainSubmitOpts :: HasMainSubmitOpts c_a1pz5 => Lens' c_a1pz5 MainSubmitOpts
@@ -5666,8 +5692,14 @@ msoForce :: HasMainSubmitOpts c_a1pz5 => Lens' c_a1pz5 Bool
 msoLock :: HasMainSubmitOpts c_a1pz5 => Lens' c_a1pz5 Bool
 msoSpec :: HasMainSubmitOpts c_a1pz5 => Lens' c_a1pz5 ChallengeSpec
 msoTest :: HasMainSubmitOpts c_a1pz5 => Lens' c_a1pz5 Bool
+
+-- | Submit and analyze result
 mainSubmit :: (MonadIO m, MonadError [String] m) => Config -> MainSubmitOpts -> m ()
+
+-- | Default options for <a>mainSubmit</a>.
 defaultMSO :: ChallengeSpec -> MainSubmitOpts
+
+-- | Do the action with a given ANSI foreground color and intensity.
 withColor :: ColorIntensity -> Color -> IO () -> IO ()
 instance AOC2018.Run.HasMainSubmitOpts AOC2018.Run.MainSubmitOpts
 instance GHC.Show.Show AOC2018.Run.MainSubmitOpts
