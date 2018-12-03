@@ -81,12 +81,12 @@ freqs :: Ord a => [a] -> Map a Int
 --   
 --   , [ 1,10,100] , [ 0, 9,100] , [ 0,11,100] , [ 0,10, 99] , [ 0,10,101]
 --   ]
-perturbations :: Ord a => (a -> [a]) -> [a] -> [[a]]
+perturbations :: (a -> [a]) -> [a] -> [[a]]
 
 
 -- | Types to drive the challenge runner and help speed up/clean up
 --   solutions.
-module AOC2018.Challenge
+module AOC2018.Solver
 
 -- | Abstracting over the type of a challenge solver to help with cleaner
 --   solutions.
@@ -148,11 +148,32 @@ CS :: Finite 25 -> Char -> ChallengeSpec
 
 -- | Lookup up a solution from a <a>ChallengeMap</a>
 lookupSolution :: ChallengeSpec -> ChallengeMap -> Maybe SomeSolution
-instance GHC.Generics.Generic AOC2018.Challenge.SolutionError
-instance GHC.Classes.Ord AOC2018.Challenge.SolutionError
-instance GHC.Classes.Eq AOC2018.Challenge.SolutionError
-instance GHC.Show.Show AOC2018.Challenge.SolutionError
-instance Control.DeepSeq.NFData AOC2018.Challenge.SolutionError
+instance GHC.Generics.Generic AOC2018.Solver.SolutionError
+instance GHC.Classes.Ord AOC2018.Solver.SolutionError
+instance GHC.Classes.Eq AOC2018.Solver.SolutionError
+instance GHC.Show.Show AOC2018.Solver.SolutionError
+instance Control.DeepSeq.NFData AOC2018.Solver.SolutionError
+
+
+-- | Template Haskell for discovering all named challenges in a given
+--   directory.
+module AOC2018.Discover
+
+-- | Meant to be called like:
+--   
+--   <pre>
+--   mkChallengeMap $$(solutionList "src/AOC2018/Challenge")
+--   </pre>
+mkChallengeMap :: [(Finite 25, (Char, SomeSolution))] -> ChallengeMap
+
+-- | Template Haskell splice to produce a list of all named solutions in a
+--   directory. Expects solutions as function names following the format
+--   <tt>dayDDp</tt>, where <tt>DD</tt> is a two-digit zero-added day, and
+--   <tt>p</tt> is a lower-case letter corresponding to the part of the
+--   challenge.
+--   
+--   See <a>mkChallengeMap</a> for a description of usage.
+solutionList :: FilePath -> Q (TExp [(Finite 25, (Char, SomeSolution))])
 
 
 -- | Custom Prelude while developing challenges. Ideally, once challenges
@@ -5013,7 +5034,7 @@ freqs :: Ord a => [a] -> Map a Int
 --   
 --   , [ 1,10,100] , [ 0, 9,100] , [ 0,11,100] , [ 0,10, 99] , [ 0,10,101]
 --   ]
-perturbations :: Ord a => (a -> [a]) -> [a] -> [[a]]
+perturbations :: (a -> [a]) -> [a] -> [[a]]
 
 -- | Errors that might happen when running a <a>:~&gt;</a> on some input.
 data SolutionError
@@ -5077,8 +5098,7 @@ runSomeSolution :: SomeSolution -> String -> Either SolutionError String
 lookupSolution :: ChallengeSpec -> ChallengeMap -> Maybe SomeSolution
 
 
--- | Day 25. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 25. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5095,8 +5115,7 @@ lookupSolution :: ChallengeSpec -> ChallengeMap -> Maybe SomeSolution
 module AOC2018.Challenge.Day25
 
 
--- | Day 24. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 24. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5113,8 +5132,7 @@ module AOC2018.Challenge.Day25
 module AOC2018.Challenge.Day24
 
 
--- | Day 23. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 23. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5131,8 +5149,7 @@ module AOC2018.Challenge.Day24
 module AOC2018.Challenge.Day23
 
 
--- | Day 22. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 22. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5149,8 +5166,7 @@ module AOC2018.Challenge.Day23
 module AOC2018.Challenge.Day22
 
 
--- | Day 21. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 21. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5167,8 +5183,7 @@ module AOC2018.Challenge.Day22
 module AOC2018.Challenge.Day21
 
 
--- | Day 20. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 20. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5185,8 +5200,7 @@ module AOC2018.Challenge.Day21
 module AOC2018.Challenge.Day20
 
 
--- | Day 19. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 19. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5203,8 +5217,7 @@ module AOC2018.Challenge.Day20
 module AOC2018.Challenge.Day19
 
 
--- | Day 18. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 18. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5221,8 +5234,7 @@ module AOC2018.Challenge.Day19
 module AOC2018.Challenge.Day18
 
 
--- | Day 17. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 17. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5239,8 +5251,7 @@ module AOC2018.Challenge.Day18
 module AOC2018.Challenge.Day17
 
 
--- | Day 16. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 16. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5257,8 +5268,7 @@ module AOC2018.Challenge.Day17
 module AOC2018.Challenge.Day16
 
 
--- | Day 15. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 15. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5275,8 +5285,7 @@ module AOC2018.Challenge.Day16
 module AOC2018.Challenge.Day15
 
 
--- | Day 14. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 14. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5293,8 +5302,7 @@ module AOC2018.Challenge.Day15
 module AOC2018.Challenge.Day14
 
 
--- | Day 13. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 13. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5311,8 +5319,7 @@ module AOC2018.Challenge.Day14
 module AOC2018.Challenge.Day13
 
 
--- | Day 12. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 12. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5329,8 +5336,7 @@ module AOC2018.Challenge.Day13
 module AOC2018.Challenge.Day12
 
 
--- | Day 11. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 11. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5347,8 +5353,7 @@ module AOC2018.Challenge.Day12
 module AOC2018.Challenge.Day11
 
 
--- | Day 10. See <a>AOC2018.Challenge</a> for the types used in this
---   module!
+-- | Day 10. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5365,7 +5370,7 @@ module AOC2018.Challenge.Day11
 module AOC2018.Challenge.Day10
 
 
--- | Day 9. See <a>AOC2018.Challenge</a> for the types used in this module!
+-- | Day 9. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5382,7 +5387,7 @@ module AOC2018.Challenge.Day10
 module AOC2018.Challenge.Day09
 
 
--- | Day 8. See <a>AOC2018.Challenge</a> for the types used in this module!
+-- | Day 8. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5399,7 +5404,7 @@ module AOC2018.Challenge.Day09
 module AOC2018.Challenge.Day08
 
 
--- | Day 7. See <a>AOC2018.Challenge</a> for the types used in this module!
+-- | Day 7. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5416,7 +5421,7 @@ module AOC2018.Challenge.Day08
 module AOC2018.Challenge.Day07
 
 
--- | Day 6. See <a>AOC2018.Challenge</a> for the types used in this module!
+-- | Day 6. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5433,7 +5438,7 @@ module AOC2018.Challenge.Day07
 module AOC2018.Challenge.Day06
 
 
--- | Day 5. See <a>AOC2018.Challenge</a> for the types used in this module!
+-- | Day 5. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5450,7 +5455,7 @@ module AOC2018.Challenge.Day06
 module AOC2018.Challenge.Day05
 
 
--- | Day 4. See <a>AOC2018.Challenge</a> for the types used in this module!
+-- | Day 4. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5467,7 +5472,7 @@ module AOC2018.Challenge.Day05
 module AOC2018.Challenge.Day04
 
 
--- | Day 3. See <a>AOC2018.Challenge</a> for the types used in this module!
+-- | Day 3. See <a>AOC2018.Solver</a> for the types used in this module!
 --   
 --   After completing the challenge, it is recommended to:
 --   
@@ -5484,28 +5489,7 @@ module AOC2018.Challenge.Day04
 module AOC2018.Challenge.Day03
 
 
--- | Template Haskell for discovering all named challenges in a given
---   directory.
-module AOC2018.Discover
-
--- | Meant to be called like:
---   
---   <pre>
---   mkChallengeMap $$(solutionList "src/AOC2018/Challenge")
---   </pre>
-mkChallengeMap :: [(Finite 25, (Char, SomeSolution))] -> ChallengeMap
-
--- | Template Haskell splice to produce a list of all named solutions in a
---   directory. Expects solutions as function names following the format
---   <tt>dayDDp</tt>, where <tt>DD</tt> is a two-digit zero-added day, and
---   <tt>p</tt> is a lower-case letter corresponding to the part of the
---   challenge.
---   
---   See <a>mkChallengeMap</a> for a description of usage.
-solutionList :: FilePath -> Q (TExp [(Finite 25, (Char, SomeSolution))])
-
-
--- | Day 2. See <a>AOC2018.Challenge</a> for the types used in this module!
+-- | Day 2. See <a>AOC2018.Solver</a> for the types used in this module!
 module AOC2018.Challenge.Day02
 
 -- | We compute a frequency map of all of the characters in a string, and
@@ -5523,7 +5507,7 @@ day02a :: [String] :~> Int
 day02b :: [String] :~> String
 
 
--- | Day 1! See <a>AOC2018.Challenge</a> for the types used in this module!
+-- | Day 1! See <a>AOC2018.Solver</a> for the types used in this module!
 module AOC2018.Challenge.Day01
 
 -- | Here we have a basic sum of numbers.
