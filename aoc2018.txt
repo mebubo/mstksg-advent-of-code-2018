@@ -378,6 +378,15 @@ class Applicative m => Monad (m :: Type -> Type)
 
 -- | Inject a value into the monadic type.
 return :: Monad m => a -> m a
+
+-- | Fail with a message. This operation is not part of the mathematical
+--   definition of a monad, but is invoked on pattern-match failure in a
+--   <tt>do</tt> expression.
+--   
+--   As part of the MonadFail proposal (MFP), this function is moved to its
+--   own class <tt>MonadFail</tt> (see <a>Control.Monad.Fail</a> for more
+--   details). The definition here will be removed in a future release.
+fail :: Monad m => String -> m a
 infixl 1 >>=
 infixl 1 >>
 
@@ -400,30 +409,30 @@ fmap :: Functor f => (a -> b) -> f a -> f b
 (<$) :: Functor f => a -> f b -> f a
 infixl 4 <$
 
--- | When a value is bound in <tt>do</tt>-notation, the pattern on the left
---   hand side of <tt>&lt;-</tt> might not match. In this case, this class
---   provides a function to recover.
+-- | Monads having fixed points with a 'knot-tying' semantics. Instances of
+--   <a>MonadFix</a> should satisfy the following laws:
 --   
---   A <a>Monad</a> without a <a>MonadFail</a> instance may only be used in
---   conjunction with pattern that always match, such as newtypes, tuples,
---   data types with only a single data constructor, and irrefutable
---   patterns (<tt>~pat</tt>).
+--   <ul>
+--   <li><i><i>purity</i></i> <tt><a>mfix</a> (<tt>return</tt> . h) =
+--   <tt>return</tt> (<a>fix</a> h)</tt></li>
+--   <li><i><i>left shrinking</i> (or <i>tightening</i>)</i>
+--   <tt><a>mfix</a> (\x -&gt; a &gt;&gt;= \y -&gt; f x y) = a &gt;&gt;= \y
+--   -&gt; <a>mfix</a> (\x -&gt; f x y)</tt></li>
+--   <li><i><i>sliding</i></i> <tt><a>mfix</a> (<a>liftM</a> h . f) =
+--   <a>liftM</a> h (<a>mfix</a> (f . h))</tt>, for strict <tt>h</tt>.</li>
+--   <li><i><i>nesting</i></i> <tt><a>mfix</a> (\x -&gt; <a>mfix</a> (\y
+--   -&gt; f x y)) = <a>mfix</a> (\x -&gt; f x x)</tt></li>
+--   </ul>
 --   
---   Instances of <a>MonadFail</a> should satisfy the following law:
---   <tt>fail s</tt> should be a left zero for <tt>&gt;&gt;=</tt>,
---   
---   <pre>
---   fail s &gt;&gt;= f  =  fail s
---   </pre>
---   
---   If your <a>Monad</a> is also <tt>MonadPlus</tt>, a popular definition
---   is
---   
---   <pre>
---   fail _ = mzero
---   </pre>
-class Monad m => MonadFail (m :: Type -> Type)
-fail :: MonadFail m => String -> m a
+--   This class is used in the translation of the recursive <tt>do</tt>
+--   notation supported by GHC and Hugs.
+class Monad m => MonadFix (m :: Type -> Type)
+
+-- | The fixed point of a monadic computation. <tt><a>mfix</a> f</tt>
+--   executes the action <tt>f</tt> only once, with the eventual output fed
+--   back as the input. Hence <tt>f</tt> should not be strict, for then
+--   <tt><a>mfix</a> f</tt> would diverge.
+mfix :: MonadFix m => (a -> m a) -> m a
 
 -- | A functor with application, providing operations to
 --   
@@ -2283,6 +2292,16 @@ foldM :: (Foldable t, Monad m) => (b -> a -> m b) -> b -> t a -> m b
 -- | The reverse of <a>when</a>.
 unless :: Applicative f => Bool -> f () -> f ()
 
+-- | Lifts an <tt><a>Either</a> e</tt> into any <tt><a>MonadError</a>
+--   e</tt>.
+--   
+--   <pre>
+--   do { val &lt;- liftEither =&lt;&lt; action1; action2 }
+--   </pre>
+--   
+--   where <tt>action1</tt> returns an <a>Either</a> to represent errors.
+liftEither :: MonadError e m => Either e a -> m a
+
 -- | A set of values <tt>a</tt>.
 data Set a
 
@@ -2476,6 +2495,19 @@ infixl 4 <$!>
 --   Nothing
 --   </pre>
 mfilter :: MonadPlus m => (a -> Bool) -> m a -> m a
+
+-- | Minimal definition is either both of <tt>get</tt> and <tt>put</tt> or
+--   just <tt>state</tt>
+class Monad m => MonadState s (m :: Type -> Type) | m -> s
+
+-- | Return the state from the internals of the monad.
+get :: MonadState s m => m s
+
+-- | Replace the state inside the monad.
+put :: MonadState s m => s -> m ()
+
+-- | Embed a simple state action into the monad.
+state :: MonadState s m => (s -> (a, s)) -> m a
 
 -- | If <a>Void</a> is uninhabited then any <a>Functor</a> that holds only
 --   values of type <a>Void</a> is holding no values.
@@ -2671,6 +2703,23 @@ first :: Bifunctor p => (a -> b) -> p a c -> p b c
 --   Right 4
 --   </pre>
 second :: Bifunctor p => (b -> c) -> p a b -> p a c
+
+-- | Monads in which <a>IO</a> computations may be embedded. Any monad
+--   built by applying a sequence of monad transformers to the <a>IO</a>
+--   monad will be an instance of this class.
+--   
+--   Instances should satisfy the following laws, which state that
+--   <a>liftIO</a> is a transformer of monads:
+--   
+--   <ul>
+--   <li><pre><a>liftIO</a> . <a>return</a> = <a>return</a></pre></li>
+--   <li><pre><a>liftIO</a> (m &gt;&gt;= f) = <a>liftIO</a> m &gt;&gt;=
+--   (<a>liftIO</a> . f)</pre></li>
+--   </ul>
+class Monad m => MonadIO (m :: Type -> Type)
+
+-- | Lift a computation from the <a>IO</a> monad.
+liftIO :: MonadIO m => IO a -> m a
 
 -- | Calls <a>perror</a> to indicate that there is a type error or similar
 --   in the given argument.
@@ -4464,6 +4513,49 @@ swap :: () => (a, b) -> (b, a)
 --   because it works in <i>O(1)</i> rather than <i>O(log n)</i>
 stimesIdempotentMonoid :: (Integral b, Monoid a) => b -> a -> a
 
+-- | A state transformer monad parameterized by:
+--   
+--   <ul>
+--   <li><tt>s</tt> - The state.</li>
+--   <li><tt>m</tt> - The inner monad.</li>
+--   </ul>
+--   
+--   The <a>return</a> function leaves the state unchanged, while
+--   <tt>&gt;&gt;=</tt> uses the final state of the first computation as
+--   the initial state of the second.
+newtype StateT s (m :: Type -> Type) a
+StateT :: (s -> m (a, s)) -> StateT s a
+[runStateT] :: StateT s a -> s -> m (a, s)
+
+-- | A monad transformer that adds exceptions to other monads.
+--   
+--   <tt>ExceptT</tt> constructs a monad parameterized over two things:
+--   
+--   <ul>
+--   <li>e - The exception type.</li>
+--   <li>m - The inner monad.</li>
+--   </ul>
+--   
+--   The <a>return</a> function yields a computation that produces the
+--   given value, while <tt>&gt;&gt;=</tt> sequences two subcomputations,
+--   exiting on the first exception.
+newtype ExceptT e (m :: Type -> Type) a
+ExceptT :: m (Either e a) -> ExceptT e a
+
+-- | The class of monad transformers. Instances should satisfy the
+--   following laws, which state that <a>lift</a> is a monad
+--   transformation:
+--   
+--   <ul>
+--   <li><pre><a>lift</a> . <a>return</a> = <a>return</a></pre></li>
+--   <li><pre><a>lift</a> (m &gt;&gt;= f) = <a>lift</a> m &gt;&gt;=
+--   (<a>lift</a> . f)</pre></li>
+--   </ul>
+class MonadTrans (t :: Type -> Type -> Type -> Type)
+
+-- | Lift a computation from the argument monad to the constructed monad.
+lift :: (MonadTrans t, Monad m) => m a -> t m a
+
 -- | A map of integers to values <tt>a</tt>.
 data IntMap a
 
@@ -4695,6 +4787,183 @@ lmap :: Profunctor p => (a -> b) -> p b c -> p a c
 --   <a>rmap</a> ≡ <a>dimap</a> <a>id</a>
 --   </pre>
 rmap :: Profunctor p => (b -> c) -> p a b -> p a c
+
+-- | The strategy of combining computations that can throw exceptions by
+--   bypassing bound functions from the point an exception is thrown to the
+--   point that it is handled.
+--   
+--   Is parameterized over the type of error information and the monad type
+--   constructor. It is common to use <tt><a>Either</a> String</tt> as the
+--   monad type constructor for an error monad in which error descriptions
+--   take the form of strings. In that case and many other common cases the
+--   resulting monad is already defined as an instance of the
+--   <a>MonadError</a> class. You can also define your own error type
+--   and/or use a monad type constructor other than <tt><a>Either</a>
+--   <tt>String</tt></tt> or <tt><a>Either</a> <tt>IOError</tt></tt>. In
+--   these cases you will have to explicitly define instances of the
+--   <a>MonadError</a> class. (If you are using the deprecated
+--   <a>Control.Monad.Error</a> or <a>Control.Monad.Trans.Error</a>, you
+--   may also have to define an <a>Error</a> instance.)
+class Monad m => MonadError e (m :: Type -> Type) | m -> e
+
+-- | Is used within a monadic computation to begin exception processing.
+throwError :: MonadError e m => e -> m a
+
+-- | A handler function to handle previous errors and return to normal
+--   execution. A common idiom is:
+--   
+--   <pre>
+--   do { action1; action2; action3 } `catchError` handler
+--   </pre>
+--   
+--   where the <tt>action</tt> functions can call <a>throwError</a>. Note
+--   that <tt>handler</tt> and the do-block must have the same return type.
+catchError :: MonadError e m => m a -> (e -> m a) -> m a
+
+-- | Unwrap a state monad computation as a function. (The inverse of
+--   <a>state</a>.)
+runState :: () => State s a -> s -> (a, s)
+
+-- | A state monad parameterized by the type <tt>s</tt> of the state to
+--   carry.
+--   
+--   The <a>return</a> function leaves the state unchanged, while
+--   <tt>&gt;&gt;=</tt> uses the final state of the first computation as
+--   the initial state of the second.
+type State s = StateT s Identity
+
+-- | Gets specific component of the state, using a projection function
+--   supplied.
+gets :: MonadState s m => (s -> a) -> m a
+
+-- | A variant of <a>modify</a> in which the computation is strict in the
+--   new state.
+modify' :: MonadState s m => (s -> s) -> m ()
+
+-- | Monadic state transformer.
+--   
+--   Maps an old state to a new state inside a state monad. The old state
+--   is thrown away.
+--   
+--   <pre>
+--   Main&gt; :t modify ((+1) :: Int -&gt; Int)
+--   modify (...) :: (MonadState Int a) =&gt; a ()
+--   </pre>
+--   
+--   This says that <tt>modify (+1)</tt> acts over any Monad that is a
+--   member of the <tt>MonadState</tt> class, with an <tt>Int</tt> state.
+modify :: MonadState s m => (s -> s) -> m ()
+
+-- | The parameterizable exception monad.
+--   
+--   Computations are either exceptions or normal values.
+--   
+--   The <a>return</a> function returns a normal value, while
+--   <tt>&gt;&gt;=</tt> exits on the first exception. For a variant that
+--   continues after an error and collects all the errors, see
+--   <a>Errors</a>.
+type Except e = ExceptT e Identity
+
+-- | Extractor for computations in the exception monad. (The inverse of
+--   <a>except</a>).
+runExcept :: () => Except e a -> Either e a
+
+-- | Map the unwrapped computation using the given function.
+--   
+--   <ul>
+--   <li><pre><a>runExcept</a> (<a>mapExcept</a> f m) = f (<a>runExcept</a>
+--   m)</pre></li>
+--   </ul>
+mapExcept :: () => (Either e a -> Either e' b) -> Except e a -> Except e' b
+
+-- | Transform any exceptions thrown by the computation using the given
+--   function (a specialization of <a>withExceptT</a>).
+withExcept :: () => (e -> e') -> Except e a -> Except e' a
+
+-- | The inverse of <a>ExceptT</a>.
+runExceptT :: () => ExceptT e m a -> m (Either e a)
+
+-- | Map the unwrapped computation using the given function.
+--   
+--   <ul>
+--   <li><pre><a>runExceptT</a> (<a>mapExceptT</a> f m) = f
+--   (<a>runExceptT</a> m)</pre></li>
+--   </ul>
+mapExceptT :: () => (m (Either e a) -> n (Either e' b)) -> ExceptT e m a -> ExceptT e' n b
+
+-- | Transform any exceptions thrown by the computation using the given
+--   function.
+withExceptT :: Functor m => (e -> e') -> ExceptT e m a -> ExceptT e' m a
+
+-- | Evaluate a state computation with the given initial state and return
+--   the final value, discarding the final state.
+--   
+--   <ul>
+--   <li><pre><a>evalState</a> m s = <a>fst</a> (<a>runState</a> m
+--   s)</pre></li>
+--   </ul>
+evalState :: () => State s a -> s -> a
+
+-- | Evaluate a state computation with the given initial state and return
+--   the final state, discarding the final value.
+--   
+--   <ul>
+--   <li><pre><a>execState</a> m s = <a>snd</a> (<a>runState</a> m
+--   s)</pre></li>
+--   </ul>
+execState :: () => State s a -> s -> s
+
+-- | Map both the return value and final state of a computation using the
+--   given function.
+--   
+--   <ul>
+--   <li><pre><a>runState</a> (<a>mapState</a> f m) = f . <a>runState</a>
+--   m</pre></li>
+--   </ul>
+mapState :: () => ((a, s) -> (b, s)) -> State s a -> State s b
+
+-- | <tt><a>withState</a> f m</tt> executes action <tt>m</tt> on a state
+--   modified by applying <tt>f</tt>.
+--   
+--   <ul>
+--   <li><pre><a>withState</a> f m = <a>modify</a> f &gt;&gt; m</pre></li>
+--   </ul>
+withState :: () => (s -> s) -> State s a -> State s a
+
+-- | Evaluate a state computation with the given initial state and return
+--   the final value, discarding the final state.
+--   
+--   <ul>
+--   <li><pre><a>evalStateT</a> m s = <a>liftM</a> <a>fst</a>
+--   (<a>runStateT</a> m s)</pre></li>
+--   </ul>
+evalStateT :: Monad m => StateT s m a -> s -> m a
+
+-- | Evaluate a state computation with the given initial state and return
+--   the final state, discarding the final value.
+--   
+--   <ul>
+--   <li><pre><a>execStateT</a> m s = <a>liftM</a> <a>snd</a>
+--   (<a>runStateT</a> m s)</pre></li>
+--   </ul>
+execStateT :: Monad m => StateT s m a -> s -> m s
+
+-- | Map both the return value and final state of a computation using the
+--   given function.
+--   
+--   <ul>
+--   <li><pre><a>runStateT</a> (<a>mapStateT</a> f m) = f .
+--   <a>runStateT</a> m</pre></li>
+--   </ul>
+mapStateT :: () => (m (a, s) -> n (b, s)) -> StateT s m a -> StateT s n b
+
+-- | <tt><a>withStateT</a> f m</tt> executes action <tt>m</tt> on a state
+--   modified by applying <tt>f</tt>.
+--   
+--   <ul>
+--   <li><pre><a>withStateT</a> f m = <a>modify</a> f &gt;&gt; m</pre></li>
+--   </ul>
+withStateT :: () => (s -> s) -> StateT s m a -> StateT s m a
 
 -- | The implementation of the pointed list structure which tracks the
 --   current position in the list structure.
