@@ -5457,20 +5457,9 @@ module AOC2018.Challenge.Day04
 
 
 -- | Day 3. See <a>AOC2018.Solver</a> for the types used in this module!
---   
---   After completing the challenge, it is recommended to:
---   
---   <ul>
---   <li>Replace <a>AOC2018.Prelude</a> imports to specific modules (with
---   explicit imports) for readability.</li>
---   <li>Remove the <tt>-Wno-unused-imports</tt> and
---   <tt>-Wno-unused-top-binds</tt> pragmas.</li>
---   <li>Replace the partial type signatures underscores in the solution
---   types <tt>_ :~&gt; _</tt> with the actual types of inputs and outputs
---   of the solution. You can delete the type signatures completely and GHC
---   will recommend what should go in place of the underscores.</li>
---   </ul>
 module AOC2018.Challenge.Day03
+day03a :: [(Int, Rect)] :~> Int
+day03b :: _ :~> Int
 
 
 -- | Day 2. See <a>AOC2018.Solver</a> for the types used in this module!
