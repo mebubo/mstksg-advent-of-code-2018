@@ -5548,6 +5548,9 @@ SubWait :: SubmitRes
 SubInvalid :: SubmitRes
 SubUnknown :: SubmitRes
 
+-- | Pretty-print a <a>SubmitRes</a>
+showSubmitRes :: SubmitRes -> String
+
 -- | Run an <a>API</a> command with a given <a>SessionKey</a> to produce
 --   the result or a list of (lines of) errors.
 --   
@@ -5583,11 +5586,12 @@ module AOC2018.Load
 
 -- | A record of paths corresponding to a specific challenge.
 data ChallengePaths
-CP :: !FilePath -> !FilePath -> !FilePath -> !FilePath -> ChallengePaths
+CP :: !FilePath -> !FilePath -> !FilePath -> !FilePath -> !FilePath -> ChallengePaths
 [_cpPrompt] :: ChallengePaths -> !FilePath
 [_cpInput] :: ChallengePaths -> !FilePath
 [_cpAnswer] :: ChallengePaths -> !FilePath
 [_cpTests] :: ChallengePaths -> !FilePath
+[_cpLog] :: ChallengePaths -> !FilePath
 
 -- | Generate a <a>ChallengePaths</a> from a specification of a challenge.
 challengePaths :: ChallengeSpec -> ChallengePaths
