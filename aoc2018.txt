@@ -5529,6 +5529,7 @@ challengeMap :: ChallengeMap
 
 -- | Lookup up a solution from a <a>ChallengeMap</a>
 lookupSolution :: ChallengeSpec -> ChallengeMap -> Maybe SomeSolution
+showDay :: Finite n -> String
 
 
 -- | Haskell bindings for Advent of Code 2018 REST API.
@@ -5620,6 +5621,58 @@ challengeData :: Maybe String -> ChallengeSpec -> IO ChallengeData
 instance GHC.Show.Show AOC2018.Load.ChallengePaths
 
 
+-- | Run actions regarding challenges, solutions, tests, submissions,
+--   viewing prompts, etc.
+--   
+--   Essentially implements the functionality of the main app.
+module AOC2018.Run
+data TestSpec
+TSAll :: TestSpec
+TSDayAll :: Finite 25 -> TestSpec
+[_tsDay] :: TestSpec -> Finite 25
+TSDayPart :: Finite 25 -> Char -> TestSpec
+[_tsDay] :: TestSpec -> Finite 25
+[_tsPart] :: TestSpec -> Char
+data MainRunOpts
+MRO :: TestSpec -> Bool -> Bool -> Bool -> MainRunOpts
+[_mroSpec] :: MainRunOpts -> TestSpec
+[_mroTest] :: MainRunOpts -> Bool
+[_mroBench] :: MainRunOpts -> Bool
+[_mroLock] :: MainRunOpts -> Bool
+class HasMainRunOpts c_a1pbC
+mainRunOpts :: HasMainRunOpts c_a1pbC => Lens' c_a1pbC MainRunOpts
+mroBench :: HasMainRunOpts c_a1pbC => Lens' c_a1pbC Bool
+mroLock :: HasMainRunOpts c_a1pbC => Lens' c_a1pbC Bool
+mroSpec :: HasMainRunOpts c_a1pbC => Lens' c_a1pbC TestSpec
+mroTest :: HasMainRunOpts c_a1pbC => Lens' c_a1pbC Bool
+mainRun :: (MonadIO m, MonadError [String] m) => Config -> MainRunOpts -> m ()
+newtype MainViewOpts
+MVO :: ChallengeSpec -> MainViewOpts
+[_mvoSpec] :: MainViewOpts -> ChallengeSpec
+class HasMainViewOpts c_a1pgg
+mainViewOpts :: HasMainViewOpts c_a1pgg => Lens' c_a1pgg MainViewOpts
+mvoSpec :: HasMainViewOpts c_a1pgg => Lens' c_a1pgg ChallengeSpec
+mainView :: (MonadIO m, MonadError [String] m) => Config -> MainViewOpts -> m ()
+data MainSubmitOpts
+MSO :: ChallengeSpec -> Bool -> Bool -> Bool -> MainSubmitOpts
+[_msoSpec] :: MainSubmitOpts -> ChallengeSpec
+[_msoTest] :: MainSubmitOpts -> Bool
+[_msoForce] :: MainSubmitOpts -> Bool
+[_msoLock] :: MainSubmitOpts -> Bool
+class HasMainSubmitOpts c_a1pkS
+mainSubmitOpts :: HasMainSubmitOpts c_a1pkS => Lens' c_a1pkS MainSubmitOpts
+msoForce :: HasMainSubmitOpts c_a1pkS => Lens' c_a1pkS Bool
+msoLock :: HasMainSubmitOpts c_a1pkS => Lens' c_a1pkS Bool
+msoSpec :: HasMainSubmitOpts c_a1pkS => Lens' c_a1pkS ChallengeSpec
+msoTest :: HasMainSubmitOpts c_a1pkS => Lens' c_a1pkS Bool
+mainSubmit :: (MonadIO m, MonadError [String] m) => Config -> MainSubmitOpts -> m ()
+withColor :: ColorIntensity -> Color -> IO () -> IO ()
+instance AOC2018.Run.HasMainSubmitOpts AOC2018.Run.MainSubmitOpts
+instance AOC2018.Run.HasMainViewOpts AOC2018.Run.MainViewOpts
+instance AOC2018.Run.HasMainRunOpts AOC2018.Run.MainRunOpts
+instance GHC.Show.Show AOC2018.Run.TestSpec
+
+
 -- | Versions of loaders and runners meant to be used in GHCI.
 module AOC2018.Interactive
 
@@ -5635,6 +5688,11 @@ testSolution :: ChallengeSpec -> IO ()
 
 -- | View the prompt for a given challenge spec.
 viewPrompt :: ChallengeSpec -> IO ()
+
+-- | Unsafely create a <a>ChallengeSpec</a> from a day number and part.
+--   
+--   Is undefined if given a day number out of range (1-25).
+mkSpec :: Integer -> Char -> ChallengeSpec
 
 
 -- | Single-stop entry point for the library's functionality and all
